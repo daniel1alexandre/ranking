@@ -1,0 +1,3033 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beach Tennis Pro — Gestão de Torneios</title>
+<meta name="description" content="Sistema completo de gestão de torneios de beach tennis: ranking, etapas, grupos, programação de jogos e modo telão.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   DESIGN SYSTEM — TOKENS
+   ============================================================ */
+:root {
+  --bg-deep:       #06091a;
+  --bg-dark:       #0a0f1e;
+  --bg-card:       rgba(255,255,255,0.04);
+  --bg-card-hover: rgba(255,255,255,0.07);
+  --border:        rgba(255,255,255,0.08);
+  --border-active: rgba(0,212,255,0.4);
+
+  --cyan:   #00d4ff;
+  --cyan2:  #0099cc;
+  --orange: #ff6b35;
+  --green:  #00ff88;
+  --yellow: #ffd600;
+  --red:    #ff4757;
+  --purple: #a855f7;
+
+  --text-primary:   #f0f4ff;
+  --text-secondary: #8899bb;
+  --text-muted:     #445577;
+
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+
+  --shadow-glow-cyan:   0 0 30px rgba(0,212,255,0.2);
+  --shadow-glow-orange: 0 0 30px rgba(255,107,53,0.2);
+  --shadow-glow-green:  0 0 30px rgba(0,255,136,0.2);
+
+  --transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+  --font-head: 'Outfit', sans-serif;
+  --font-body: 'Inter', sans-serif;
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:var(--font-body);
+  background:var(--bg-deep);
+  color:var(--text-primary);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 60% 40% at 10% 20%, rgba(0,212,255,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 90% 80%, rgba(255,107,53,0.05) 0%, transparent 60%);
+  pointer-events:none;z-index:0;
+}
+h1,h2,h3,h4,h5{font-family:var(--font-head);line-height:1.2;}
+a{color:inherit;text-decoration:none;}
+button{font-family:var(--font-body);cursor:pointer;border:none;outline:none;}
+input,select,textarea{font-family:var(--font-body);outline:none;}
+ul,ol{list-style:none;}
+img{max-width:100%;display:block;}
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:99px;}
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+#app{display:flex;min-height:100vh;position:relative;z-index:1;}
+
+/* SIDEBAR */
+.sidebar{
+  width:240px;flex-shrink:0;
+  background:rgba(10,15,30,0.95);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;bottom:0;
+  z-index:100;
+  backdrop-filter:blur(20px);
+}
+.sidebar-logo{
+  padding:24px 20px 16px;
+  border-bottom:1px solid var(--border);
+}
+.sidebar-logo .logo-icon{
+  width:44px;height:44px;
+  background:linear-gradient(135deg,var(--cyan),var(--cyan2));
+  border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;margin-bottom:10px;
+  box-shadow:var(--shadow-glow-cyan);
+}
+.sidebar-logo h1{font-size:18px;font-weight:800;color:var(--text-primary);}
+.sidebar-logo span{font-size:11px;color:var(--text-muted);font-weight:500;letter-spacing:1px;text-transform:uppercase;}
+
+.sidebar-nav{flex:1;padding:12px 8px;overflow-y:auto;}
+.nav-section{margin-bottom:4px;}
+.nav-label{
+  font-size:10px;font-weight:700;color:var(--text-muted);
+  text-transform:uppercase;letter-spacing:1.5px;
+  padding:8px 12px 4px;
+}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;border-radius:var(--radius-sm);
+  color:var(--text-secondary);font-size:14px;font-weight:500;
+  cursor:pointer;transition:var(--transition);
+  margin-bottom:2px;
+}
+.nav-item:hover{background:var(--bg-card-hover);color:var(--text-primary);}
+.nav-item.active{
+  background:rgba(0,212,255,0.12);
+  color:var(--cyan);
+  border:1px solid rgba(0,212,255,0.2);
+}
+.nav-item .nav-icon{font-size:18px;width:22px;text-align:center;}
+.nav-item .nav-badge{
+  margin-left:auto;
+  background:var(--orange);color:#fff;
+  font-size:10px;font-weight:700;
+  padding:2px 6px;border-radius:99px;
+}
+
+.sidebar-footer{
+  padding:16px;border-top:1px solid var(--border);
+  font-size:12px;color:var(--text-muted);text-align:center;
+}
+
+/* MAIN CONTENT */
+.main-content{
+  margin-left:240px;
+  flex:1;min-height:100vh;
+  padding:32px;
+  max-width:calc(100vw - 240px);
+}
+
+/* ============================================================
+   VIEWS (PAGES)
+   ============================================================ */
+.view{display:none;animation:fadeIn 0.3s ease;}
+.view.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+/* ============================================================
+   PAGE HEADER
+   ============================================================ */
+.page-header{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  margin-bottom:32px;gap:16px;
+  flex-wrap:wrap;
+}
+.page-header-left{}
+.page-title{
+  font-family:var(--font-head);font-size:28px;font-weight:800;
+  color:var(--text-primary);
+}
+.page-subtitle{font-size:14px;color:var(--text-secondary);margin-top:4px;}
+.page-header-right{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:10px 18px;border-radius:var(--radius-sm);
+  font-size:13px;font-weight:600;
+  transition:var(--transition);cursor:pointer;
+  white-space:nowrap;
+}
+.btn-primary{
+  background:linear-gradient(135deg,var(--cyan),var(--cyan2));
+  color:#fff;
+  box-shadow:0 4px 16px rgba(0,212,255,0.3);
+}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(0,212,255,0.4);}
+.btn-secondary{
+  background:var(--bg-card);
+  color:var(--text-secondary);
+  border:1px solid var(--border);
+}
+.btn-secondary:hover{background:var(--bg-card-hover);color:var(--text-primary);border-color:rgba(255,255,255,0.15);}
+.btn-danger{background:rgba(255,71,87,0.15);color:var(--red);border:1px solid rgba(255,71,87,0.3);}
+.btn-danger:hover{background:rgba(255,71,87,0.25);}
+.btn-success{background:rgba(0,255,136,0.15);color:var(--green);border:1px solid rgba(0,255,136,0.3);}
+.btn-success:hover{background:rgba(0,255,136,0.25);}
+.btn-warning{background:rgba(255,214,0,0.15);color:var(--yellow);border:1px solid rgba(255,214,0,0.3);}
+.btn-warning:hover{background:rgba(255,214,0,0.25);}
+.btn-orange{background:linear-gradient(135deg,var(--orange),#e84d1a);color:#fff;box-shadow:0 4px 16px rgba(255,107,53,0.3);}
+.btn-orange:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(255,107,53,0.4);}
+.btn-sm{padding:7px 12px;font-size:12px;}
+.btn-lg{padding:14px 24px;font-size:15px;}
+.btn:disabled{opacity:0.4;cursor:not-allowed;transform:none!important;}
+
+/* ============================================================
+   CARDS
+   ============================================================ */
+.card{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  padding:24px;
+  backdrop-filter:blur(10px);
+  transition:var(--transition);
+}
+.card:hover{border-color:rgba(255,255,255,0.12);background:var(--bg-card-hover);}
+.card-title{font-family:var(--font-head);font-size:16px;font-weight:700;margin-bottom:8px;}
+.card-subtitle{font-size:13px;color:var(--text-secondary);}
+
+.stat-card{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  padding:20px;
+  display:flex;flex-direction:column;gap:8px;
+  transition:var(--transition);
+}
+.stat-card:hover{transform:translateY(-2px);border-color:var(--border-active);box-shadow:var(--shadow-glow-cyan);}
+.stat-value{font-family:var(--font-head);font-size:36px;font-weight:800;color:var(--cyan);}
+.stat-label{font-size:13px;color:var(--text-secondary);font-weight:500;}
+.stat-delta{font-size:12px;color:var(--green);}
+
+/* ============================================================
+   GRID HELPERS
+   ============================================================ */
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+.grid-auto{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;}
+@media(max-width:1200px){.grid-4{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:900px){.grid-3,.grid-2{grid-template-columns:1fr;}}
+
+/* ============================================================
+   FORMS
+   ============================================================ */
+.form-group{margin-bottom:18px;}
+.form-label{
+  display:block;font-size:13px;font-weight:600;
+  color:var(--text-secondary);margin-bottom:7px;
+}
+.form-control{
+  width:100%;
+  background:rgba(255,255,255,0.05);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  color:var(--text-primary);
+  padding:10px 14px;font-size:14px;
+  transition:var(--transition);
+}
+.form-control:focus{border-color:var(--cyan);background:rgba(0,212,255,0.05);box-shadow:0 0 0 3px rgba(0,212,255,0.1);}
+.form-control::placeholder{color:var(--text-muted);}
+select.form-control option{background:var(--bg-dark);color:var(--text-primary);}
+.form-row{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
+.form-hint{font-size:12px;color:var(--text-muted);margin-top:5px;}
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+.modal-overlay{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.7);
+  backdrop-filter:blur(8px);
+  z-index:1000;
+  display:none;align-items:center;justify-content:center;
+  padding:20px;
+}
+.modal-overlay.open{display:flex;animation:fadeIn 0.2s ease;}
+.modal{
+  background:rgba(12,18,35,0.98);
+  border:1px solid rgba(255,255,255,0.12);
+  border-radius:var(--radius-lg);
+  width:100%;max-width:560px;
+  max-height:90vh;overflow-y:auto;
+  box-shadow:0 24px 80px rgba(0,0,0,0.5);
+}
+.modal-header{
+  padding:24px 24px 0;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.modal-title{font-family:var(--font-head);font-size:20px;font-weight:700;}
+.modal-close{
+  width:32px;height:32px;
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:8px;color:var(--text-secondary);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:16px;transition:var(--transition);
+}
+.modal-close:hover{color:var(--text-primary);border-color:rgba(255,255,255,0.2);}
+.modal-body{padding:24px;}
+.modal-footer{
+  padding:0 24px 24px;
+  display:flex;gap:10px;justify-content:flex-end;
+}
+
+/* ============================================================
+   BADGES / TAGS
+   ============================================================ */
+.badge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 10px;border-radius:99px;
+  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;
+}
+.badge-open{background:rgba(0,255,136,0.15);color:var(--green);border:1px solid rgba(0,255,136,0.3);}
+.badge-active{background:rgba(0,212,255,0.15);color:var(--cyan);border:1px solid rgba(0,212,255,0.3);}
+.badge-closed{background:rgba(255,255,255,0.07);color:var(--text-muted);border:1px solid var(--border);}
+.badge-m{background:rgba(0,212,255,0.15);color:var(--cyan);border:1px solid rgba(0,212,255,0.2);}
+.badge-f{background:rgba(168,85,247,0.15);color:var(--purple);border:1px solid rgba(168,85,247,0.2);}
+.badge-live{background:rgba(0,255,136,0.2);color:var(--green);animation:pulse-badge 1.5s infinite;}
+.badge-wait{background:rgba(255,214,0,0.15);color:var(--yellow);}
+.badge-done{background:rgba(255,255,255,0.07);color:var(--text-muted);}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;}
+.dot-green{background:var(--green);}
+.dot-yellow{background:var(--yellow);}
+.dot-gray{background:var(--text-muted);}
+.dot-red{background:var(--red);}
+@keyframes pulse-badge{0%,100%{opacity:1;}50%{opacity:0.6;}}
+
+/* ============================================================
+   TABLE
+   ============================================================ */
+.table-wrapper{overflow-x:auto;}
+.table{width:100%;border-collapse:collapse;}
+.table th{
+  font-size:11px;font-weight:700;color:var(--text-muted);
+  text-transform:uppercase;letter-spacing:1px;
+  padding:10px 14px;text-align:left;
+  border-bottom:1px solid var(--border);
+  white-space:nowrap;
+}
+.table td{
+  padding:12px 14px;font-size:14px;
+  border-bottom:1px solid rgba(255,255,255,0.04);
+  vertical-align:middle;
+}
+.table tr:last-child td{border-bottom:none;}
+.table tbody tr{transition:var(--transition);}
+.table tbody tr:hover{background:rgba(255,255,255,0.03);}
+.table .pos-1{color:var(--yellow);}
+.table .pos-2{color:var(--text-secondary);}
+.table .pos-3{color:var(--orange);}
+.rank-num{
+  width:32px;height:32px;border-radius:50%;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:13px;
+}
+.rank-1{background:rgba(255,214,0,0.2);color:var(--yellow);}
+.rank-2{background:rgba(192,192,192,0.15);color:#aaa;}
+.rank-3{background:rgba(255,107,53,0.2);color:var(--orange);}
+.rank-n{background:var(--bg-card);color:var(--text-secondary);}
+
+/* ============================================================
+   TABS
+   ============================================================ */
+.tabs{display:flex;gap:4px;background:rgba(255,255,255,0.04);border-radius:10px;padding:4px;margin-bottom:24px;}
+.tab{
+  flex:1;padding:9px 16px;border-radius:8px;
+  font-size:13px;font-weight:600;color:var(--text-secondary);
+  cursor:pointer;transition:var(--transition);text-align:center;
+}
+.tab.active{background:rgba(0,212,255,0.15);color:var(--cyan);}
+.tab:hover:not(.active){color:var(--text-primary);background:rgba(255,255,255,0.04);}
+
+/* ============================================================
+   TOAST NOTIFICATIONS
+   ============================================================ */
+#toast-container{
+  position:fixed;top:24px;right:24px;z-index:9999;
+  display:flex;flex-direction:column;gap:10px;
+  pointer-events:none;
+}
+.toast{
+  background:rgba(12,18,35,0.97);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:14px 18px;
+  display:flex;align-items:center;gap:12px;
+  font-size:14px;font-weight:500;
+  backdrop-filter:blur(20px);
+  box-shadow:0 8px 32px rgba(0,0,0,0.4);
+  animation:slideIn 0.3s ease;
+  pointer-events:all;
+  min-width:280px;
+}
+.toast.success{border-color:rgba(0,255,136,0.4);color:var(--green);}
+.toast.error{border-color:rgba(255,71,87,0.4);color:var(--red);}
+.toast.info{border-color:rgba(0,212,255,0.4);color:var(--cyan);}
+.toast.warning{border-color:rgba(255,214,0,0.4);color:var(--yellow);}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0;}to{transform:translateX(0);opacity:1;}}
+
+/* ============================================================
+   STAGE CARD
+   ============================================================ */
+.stage-card{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  padding:20px;
+  cursor:pointer;transition:var(--transition);
+  position:relative;overflow:hidden;
+}
+.stage-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--cyan),var(--orange));
+  opacity:0;transition:var(--transition);
+}
+.stage-card:hover{transform:translateY(-2px);border-color:var(--border-active);}
+.stage-card:hover::before{opacity:1;}
+.stage-card.status-open::before{opacity:1;background:linear-gradient(90deg,var(--green),var(--cyan));}
+.stage-card.status-active::before{opacity:1;background:linear-gradient(90deg,var(--cyan),var(--orange));}
+.stage-card .stage-num{
+  font-family:var(--font-head);font-size:42px;font-weight:900;
+  color:var(--border);line-height:1;
+  position:absolute;right:16px;top:16px;
+}
+.stage-card .stage-title{font-size:16px;font-weight:700;margin-bottom:4px;}
+.stage-card .stage-sponsor{font-size:13px;color:var(--cyan);margin-bottom:12px;}
+.stage-card .stage-meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+
+/* ============================================================
+   MATCH CARD
+   ============================================================ */
+.match-card{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:14px 18px;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;transition:var(--transition);
+  flex-wrap:wrap;
+}
+.match-card.live{border-color:rgba(0,255,136,0.4);background:rgba(0,255,136,0.04);}
+.match-card.waiting{border-color:rgba(255,214,0,0.3);background:rgba(255,214,0,0.02);}
+.match-card.done{opacity:0.75;}
+.match-team{display:flex;flex-direction:column;gap:4px;flex:1;}
+.match-team .player{font-size:13px;font-weight:600;color:var(--text-primary);}
+.match-score{
+  font-family:var(--font-head);font-size:20px;font-weight:800;
+  color:var(--cyan);text-align:center;min-width:80px;
+}
+.match-score.done-score{color:var(--text-secondary);}
+.match-info{font-size:11px;color:var(--text-muted);}
+
+/* ============================================================
+   SCHEDULE GRID
+   ============================================================ */
+.schedule-grid{
+  display:grid;
+  gap:1px;
+  background:var(--border);
+  border-radius:var(--radius-sm);
+  overflow:hidden;
+  border:1px solid var(--border);
+}
+.schedule-header{background:rgba(255,255,255,0.04);padding:10px 14px;font-size:12px;font-weight:700;text-align:center;color:var(--text-muted);}
+.schedule-cell{
+  background:var(--bg-dark);padding:8px;min-height:80px;
+  position:relative;transition:var(--transition);
+}
+.schedule-cell:hover{background:rgba(255,255,255,0.03);}
+.schedule-cell.dragover{background:rgba(0,212,255,0.08);outline:2px dashed var(--cyan);}
+.time-label{
+  background:rgba(255,255,255,0.03);padding:10px 14px;
+  font-size:12px;font-weight:600;color:var(--text-muted);
+  display:flex;align-items:center;
+}
+.match-chip{
+  background:rgba(0,212,255,0.1);
+  border:1px solid rgba(0,212,255,0.25);
+  border-radius:6px;padding:6px 8px;
+  font-size:11px;font-weight:600;
+  cursor:grab;transition:var(--transition);
+  margin-bottom:4px;
+}
+.match-chip:active{cursor:grabbing;opacity:0.8;}
+.match-chip.chip-live{background:rgba(0,255,136,0.15);border-color:rgba(0,255,136,0.4);animation:pulse-live 1.5s infinite;}
+.match-chip.chip-wait{background:rgba(255,214,0,0.1);border-color:rgba(255,214,0,0.3);}
+.match-chip.chip-done{background:rgba(255,255,255,0.04);border-color:var(--border);opacity:0.6;}
+@keyframes pulse-live{0%,100%{box-shadow:0 0 0 0 rgba(0,255,136,0.4);}50%{box-shadow:0 0 0 6px rgba(0,255,136,0);}}
+
+/* ============================================================
+   SCOREBOARD / TELÃO
+   ============================================================ */
+#view-scoreboard{background:var(--bg-deep);}
+.scoreboard-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 24px;
+  background:rgba(0,0,0,0.4);
+  border-bottom:1px solid var(--border);
+  margin:-32px -32px 24px;
+}
+.scoreboard-title{font-family:var(--font-head);font-size:24px;font-weight:900;}
+.scoreboard-clock{font-family:var(--font-head);font-size:28px;font-weight:800;color:var(--cyan);}
+.scoreboard-courts{
+  display:grid;
+  gap:16px;
+}
+.court-panel{
+  background:rgba(255,255,255,0.04);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  overflow:hidden;
+}
+.court-panel-header{
+  padding:12px 16px;
+  background:rgba(255,255,255,0.04);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.court-name{font-family:var(--font-head);font-size:15px;font-weight:700;}
+.court-status-dot{width:10px;height:10px;border-radius:50%;}
+.court-panel-body{padding:12px;}
+.scoreboard-match{
+  border-radius:var(--radius-sm);
+  padding:12px 16px;margin-bottom:8px;
+  border:1px solid transparent;
+  transition:var(--transition);
+}
+.scoreboard-match.live{
+  background:rgba(0,255,136,0.08);
+  border-color:rgba(0,255,136,0.4);
+  animation:pulse-card 2s infinite;
+}
+.scoreboard-match.waiting{
+  background:rgba(255,214,0,0.06);
+  border-color:rgba(255,214,0,0.3);
+}
+.scoreboard-match.done{
+  background:rgba(255,255,255,0.03);
+  border-color:var(--border);opacity:0.7;
+}
+@keyframes pulse-card{0%,100%{box-shadow:0 0 0 0 rgba(0,255,136,0.15);}50%{box-shadow:0 0 0 8px rgba(0,255,136,0);}}
+.sm-teams{display:flex;flex-direction:column;gap:8px;margin-bottom:8px;}
+.sm-team{display:flex;align-items:center;justify-content:space-between;}
+.sm-players{font-size:14px;font-weight:600;}
+.sm-score{font-family:var(--font-head);font-size:22px;font-weight:800;color:var(--cyan);min-width:60px;text-align:right;}
+.sm-meta{display:flex;align-items:center;justify-content:space-between;}
+.sm-info{font-size:11px;color:var(--text-muted);}
+
+/* ============================================================
+   RANKING TABLE SPECIAL
+   ============================================================ */
+.ranking-row-1{background:rgba(255,214,0,0.05)!important;}
+.ranking-row-2{background:rgba(192,192,192,0.04)!important;}
+.ranking-row-3{background:rgba(255,107,53,0.05)!important;}
+.pts-cell{font-family:var(--font-head);font-size:16px;font-weight:800;color:var(--cyan);}
+.stage-pts{
+  display:inline-block;
+  background:rgba(255,255,255,0.06);
+  border-radius:4px;padding:2px 6px;
+  font-size:11px;color:var(--text-secondary);
+  min-width:30px;text-align:center;
+}
+.stage-pts.best{background:rgba(0,212,255,0.12);color:var(--cyan);}
+
+/* ============================================================
+   PODIUM
+   ============================================================ */
+.podium-section{text-align:center;padding:40px 20px;}
+.podium-title{
+  font-family:var(--font-head);font-size:48px;font-weight:900;
+  background:linear-gradient(135deg,var(--yellow),var(--orange));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  margin-bottom:8px;
+}
+.podium-subtitle{font-size:18px;color:var(--text-secondary);margin-bottom:48px;}
+.podium-stand{
+  display:flex;align-items:flex-end;justify-content:center;gap:16px;
+  margin-bottom:48px;
+}
+.podium-place{
+  display:flex;flex-direction:column;align-items:center;gap:12px;
+}
+.podium-avatar{
+  width:72px;height:72px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-head);font-size:24px;font-weight:900;
+  border:3px solid transparent;
+}
+.podium-p1 .podium-avatar{background:rgba(255,214,0,0.2);border-color:var(--yellow);color:var(--yellow);}
+.podium-p2 .podium-avatar{background:rgba(192,192,192,0.15);border-color:#aaa;color:#aaa;}
+.podium-p3 .podium-avatar{background:rgba(255,107,53,0.2);border-color:var(--orange);color:var(--orange);}
+.podium-name{font-family:var(--font-head);font-weight:700;font-size:16px;}
+.podium-pts{font-size:13px;color:var(--text-secondary);}
+.podium-block{
+  border-radius:var(--radius-sm) var(--radius-sm) 0 0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-head);font-size:32px;font-weight:900;
+  width:100px;
+}
+.podium-p1 .podium-block{height:130px;background:linear-gradient(180deg,rgba(255,214,0,0.3),rgba(255,214,0,0.1));color:var(--yellow);}
+.podium-p2 .podium-block{height:100px;background:linear-gradient(180deg,rgba(192,192,192,0.2),rgba(192,192,192,0.05));color:#aaa;}
+.podium-p3 .podium-block{height:80px;background:linear-gradient(180deg,rgba(255,107,53,0.25),rgba(255,107,53,0.05));color:var(--orange);}
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:9998;overflow:hidden;}
+.confetti-piece{
+  position:absolute;top:-20px;
+  width:8px;height:14px;
+  animation:confettiFall linear infinite;
+}
+@keyframes confettiFall{
+  to{transform:translateY(110vh) rotate(720deg);opacity:0;}
+}
+
+/* ============================================================
+   GROUP VIEW
+   ============================================================ */
+.group-card{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:var(--radius-md);padding:20px;margin-bottom:16px;
+}
+.group-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:16px;padding-bottom:12px;
+  border-bottom:1px solid var(--border);
+}
+.group-title{font-family:var(--font-head);font-size:18px;font-weight:700;}
+.group-athletes{
+  display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;
+}
+.athlete-tag{
+  background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.2);
+  border-radius:99px;padding:4px 12px;
+  font-size:13px;font-weight:600;color:var(--cyan);
+}
+.group-standings{
+  background:rgba(255,255,255,0.03);border-radius:var(--radius-sm);
+  overflow:hidden;
+}
+.standing-row{
+  display:grid;grid-template-columns:30px 1fr 40px 60px 60px 60px;
+  align-items:center;padding:9px 12px;gap:8px;
+  border-bottom:1px solid rgba(255,255,255,0.04);
+  font-size:13px;
+}
+.standing-row:last-child{border-bottom:none;}
+.standing-row.header{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;}
+
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+.empty-state{
+  text-align:center;padding:60px 20px;
+  color:var(--text-muted);
+}
+.empty-state .icon{font-size:56px;margin-bottom:16px;opacity:0.5;}
+.empty-state h3{font-size:18px;font-weight:600;color:var(--text-secondary);margin-bottom:8px;}
+.empty-state p{font-size:14px;line-height:1.6;}
+
+/* ============================================================
+   COURT CARD
+   ============================================================ */
+.court-card{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:var(--radius-md);padding:18px;
+  display:flex;flex-direction:column;gap:10px;
+  transition:var(--transition);
+}
+.court-card:hover{border-color:rgba(255,255,255,0.12);}
+.court-card-name{font-family:var(--font-head);font-size:18px;font-weight:700;}
+.court-card-meta{display:flex;flex-direction:column;gap:4px;}
+.court-meta-item{font-size:12px;color:var(--text-secondary);}
+.court-card-status{display:flex;align-items:center;justify-content:space-between;margin-top:4px;}
+.court-status-badge{
+  font-size:11px;font-weight:700;padding:4px 10px;border-radius:99px;
+  text-transform:uppercase;letter-spacing:0.5px;
+}
+.cs-free{background:rgba(0,255,136,0.15);color:var(--green);}
+.cs-busy{background:rgba(0,212,255,0.15);color:var(--cyan);}
+.cs-reserved{background:rgba(255,214,0,0.15);color:var(--yellow);}
+.cs-maint{background:rgba(255,71,87,0.15);color:var(--red);}
+
+/* ============================================================
+   SEARCH BAR
+   ============================================================ */
+.search-bar{
+  display:flex;align-items:center;gap:10px;
+  background:rgba(255,255,255,0.04);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:8px 14px;
+  transition:var(--transition);
+  flex:1;max-width:340px;
+}
+.search-bar:focus-within{border-color:var(--cyan);background:rgba(0,212,255,0.04);}
+.search-bar input{background:none;border:none;color:var(--text-primary);font-size:14px;flex:1;min-width:0;}
+.search-bar .search-icon{color:var(--text-muted);font-size:16px;}
+
+/* ============================================================
+   SECTION DIVIDER
+   ============================================================ */
+.section-divider{
+  display:flex;align-items:center;gap:12px;margin:24px 0;
+}
+.section-divider span{font-size:13px;font-weight:600;color:var(--text-muted);white-space:nowrap;}
+.section-divider::before,.section-divider::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* ============================================================
+   PRINT STYLES
+   ============================================================ */
+@media print {
+  .sidebar,.page-header-right button:not(.btn-print){display:none!important;}
+  .main-content{margin-left:0!important;padding:10px!important;}
+  body{background:#fff!important;color:#000!important;}
+  .card,.group-card,.match-card,.schedule-grid{
+    background:#fff!important;border:1px solid #ccc!important;color:#000!important;
+  }
+  .badge,.stat-value,.pts-cell{color:#000!important;}
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media(max-width:768px){
+  .sidebar{width:64px;}
+  .sidebar-logo h1,.sidebar-logo span,.nav-item span:not(.nav-icon),.nav-label{display:none;}
+  .nav-item{justify-content:center;padding:12px;}
+  .main-content{margin-left:64px;padding:16px;}
+  .scoreboard-header{margin:-16px -16px 16px;}
+}
+
+/* ============================================================
+   EXTRA UTILS
+   ============================================================ */
+.flex{display:flex;}.flex-col{flex-direction:column;}.items-center{align-items:center;}
+.justify-between{justify-content:space-between;}.justify-center{justify-content:center;}
+.gap-4{gap:4px;}.gap-8{gap:8px;}.gap-12{gap:12px;}.gap-16{gap:16px;}.gap-24{gap:24px;}
+.mb-8{margin-bottom:8px;}.mb-12{margin-bottom:12px;}.mb-16{margin-bottom:16px;}.mb-24{margin-bottom:24px;}.mb-32{margin-bottom:32px;}
+.mt-8{margin-top:8px;}.mt-16{margin-top:16px;}.mt-24{margin-top:24px;}
+.text-cyan{color:var(--cyan)!important;}.text-orange{color:var(--orange)!important;}
+.text-green{color:var(--green)!important;}.text-yellow{color:var(--yellow)!important;}
+.text-muted{color:var(--text-muted)!important;}.text-secondary{color:var(--text-secondary)!important;}
+.font-head{font-family:var(--font-head)!important;}.font-bold{font-weight:700!important;}
+.text-sm{font-size:12px!important;}.text-lg{font-size:16px!important;}.text-xl{font-size:20px!important;}
+.w-full{width:100%;}.hidden{display:none!important;}
+.divider{height:1px;background:var(--border);margin:20px 0;}
+.spinning{animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🎾</div>
+      <h1>Beach Tennis</h1>
+      <span>Pro Manager</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-label">Principal</div>
+        <div class="nav-item active" data-view="dashboard">
+          <span class="nav-icon">🏠</span><span>Dashboard</span>
+        </div>
+        <div class="nav-item" data-view="ranking">
+          <span class="nav-icon">🏆</span><span>Ranking Geral</span>
+        </div>
+        <div class="nav-item" data-view="podium">
+          <span class="nav-icon">🥇</span><span>Pódio Final</span>
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Torneio</div>
+        <div class="nav-item" data-view="stages">
+          <span class="nav-icon">📅</span><span>Etapas</span>
+        </div>
+        <div class="nav-item" data-view="register">
+          <span class="nav-icon">✍️</span><span>Inscrições</span>
+        </div>
+        <div class="nav-item" data-view="groups">
+          <span class="nav-icon">👥</span><span>Grupos e Jogos</span>
+        </div>
+        <div class="nav-item" data-view="schedule">
+          <span class="nav-icon">📋</span><span>Programação</span>
+        </div>
+        <div class="nav-item" data-view="scoreboard">
+          <span class="nav-icon">📺</span><span>Modo Telão</span>
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Configurações</div>
+        <div class="nav-item" data-view="athletes">
+          <span class="nav-icon">👤</span><span>Atletas</span>
+        </div>
+        <div class="nav-item" data-view="courts">
+          <span class="nav-icon">🏖️</span><span>Quadras</span>
+        </div>
+      </div>
+    </nav>
+    <div class="sidebar-footer">Beach Tennis Pro v1.0</div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+
+    <!-- ======================== DASHBOARD ======================== -->
+    <div id="view-dashboard" class="view active">
+      <div class="page-header">
+        <div class="page-header-left">
+          <div class="page-title">🏖️ Dashboard</div>
+          <div class="page-subtitle">Visão geral da temporada</div>
+        </div>
+        <div class="page-header-right">
+          <button class="btn btn-primary" onclick="App.navigate('register')">✍️ Nova Inscrição</button>
+        </div>
+      </div>
+      <div class="grid-4 mb-24" id="dashboard-stats"></div>
+      <div class="grid-2 mb-24">
+        <div>
+          <h3 class="font-head mb-12" style="font-size:16px;">📅 Próximas Etapas</h3>
+          <div id="dashboard-stages"></div>
+        </div>
+        <div>
+          <h3 class="font-head mb-12" style="font-size:16px;">🏆 Top Ranking — Masculino</h3>
+          <div id="dashboard-ranking-m"></div>
+        </div>
+      </div>
+      <div>
+        <h3 class="font-head mb-12" style="font-size:16px;">🏆 Top Ranking — Feminino</h3>
+        <div id="dashboard-ranking-f"></div>
+      </div>
+    </div>
+
+    <!-- ======================== ATHLETES ======================== -->
+    <div id="view-athletes" class="view">
+      <div class="page-header">
+        <div class="page-header-left">
+          <div class="page-title">👤 Atletas</div>
+          <div class="page-subtitle" id="athletes-count">Carregando...</div>
+        </div>
+        <div class="page-header-right">
+          <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="athlete-search" placeholder="Buscar atleta..." oninput="Views.Athletes.filter()">
+          </div>
+          <select class="form-control" id="athlete-gender-filter" onchange="Views.Athletes.filter()" style="width:140px;">
+            <option value="">Todos</option>
+            <option value="M">Masculino</option>
+            <option value="F">Feminino</option>
+          </select>
+          <button class="btn btn-primary" onclick="Views.Athletes.openModal()">+ Novo Atleta</button>
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>#</th><th>Nome</th><th>Categoria</th><th>Contato</th><th>Nascimento</th><th>Etapas</th><th>Pontos</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="athletes-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ======================== STAGES ======================== -->
+    <div id="view-stages" class="view">
+      <div class="page-header">
+        <div class="page-header-left">
+          <div class="page-title">📅 Etapas da Temporada</div>
+          <div class="page-subtitle">10 etapas — gerencie patrocinadores, datas e status</div>
+        </div>
+        <div class="page-header-right">
+          <button class="btn btn-secondary" onclick="Views.Stages.initStages()">🔄 Inicializar Etapas</button>
+        </div>
+      </div>
+      <div class="grid-auto" id="stages-grid"></div>
+    </div>
+
+    <!-- STAGE DETAIL (sub-view inside stages) -->
+    <div id="view-stage-detail" class="view">
+      <div class="page-header">
+        <div class="page-header-left">
+          <button class="btn btn-secondary btn-sm mb-8" onclick="App.navigate('stages')">← Voltar</button>
+          <div class="page-title" id="sd-title">Etapa</div>
+          <div class="page-subtitle" id="sd-subtitle"></div>
+        </div>
+        <div class="page-header-right" id="sd-actions"></div>
+      </div>
+      <!-- Tabs -->
+      <div class="tabs" id="sd-tabs">
+        <div class="tab active" data-tab="info">ℹ️ Informações</div>
+        <div class="tab" data-tab="registrations">✍️ Inscrições</div>
+        <div class="tab" data-tab="groups">👥 Grupos</div>
+        <div class="tab" data-tab="matches">🎾 Jogos</div>
+      </div>
+      <div id="sd-tab-content"></div>
+    </div>
+
+    <!-- ======================== REGISTER ======================== -->
+    <div id="view-register" class="view">
+      <div class="page-header">
+        <div class="page-header-left">
+          <div class="page-title">✍️ Inscrições</div>
+          <div class="page-subtitle">Inscreva atletas nas etapas com inscrições abertas</div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div>
+          <div class="card mb-16">
+            <div class="card-title mb-12">📅 Selecionar Etapa</div>
+            <div class="form-group">
+              <label class="form-label">Etapa com inscrições abertas</label>
+              <select class="form-control" id="reg-stage-select" onchange="Views.Register.onStageChange()">
+                <option value="">Selecione a etapa...</option>
+              </select>
+            </div>
+            <div id="reg-stage-info" class="hidden"></div>
+          </div>
+          <div class="card" id="reg-form-card">
+            <div class="card-title mb-12">👤 Buscar ou Cadastrar Atleta</div>
+            <div class="form-group">
+              <label class="form-label">Buscar atleta existente</label>
+              <div class="search-bar" style="max-width:100%;">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="reg-athlete-search" placeholder="Digite o nome..." oninput="Views.Register.searchAthletes()">
+              </div>
+            </div>
+            <div id="reg-search-results" class="mb-12"></div>
+            <div class="section-divider"><span>ou cadastrar novo atleta</span></div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Nome completo *</label>
+                <input type="text" class="form-control" id="reg-name" placeholder="Nome do atleta">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Categoria *</label>
+                <select class="form-control" id="reg-gender">
+                  <option value="">Selecione...</option>
+                  <option value="M">Masculino</option>
+                  <option value="F">Feminino</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Contato (WhatsApp)</label>
+                <input type="text" class="form-control" id="reg-contact" placeholder="(XX) XXXXX-XXXX">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Data de nascimento</label>
+                <input type="date" class="form-control" id="reg-birthdate">
+              </div>
+            </div>
+            <button class="btn btn-primary w-full" onclick="Views.Register.submit()">✍️ Inscrever Atleta</button>
+          </div>
+        </div>
+        <div>
+          <div class="card">
+            <div class="card-title mb-12">📋 Inscritos na Etapa</div>
+            <div class="tabs" style="margin-bottom:12px;">
+              <div class="tab active" id="reg-tab-m" onclick="Views.Register.setGenderTab('M')">👨 Masculino</div>
+              <div class="tab" id="reg-tab-f" onclick="Views.Register.setGenderTab('F')">👩 Feminino</div>
+            </div>
+            <div id="reg-list-m"></div>
+            <div id="reg-list-f" class="hidden"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================== GROUPS ======================== -->
+    <div id="view-groups" class="view">
+      <div class="page-header">
+        <div class="page-header-left">
+          <div class="page-title">👥 Grupos e Jogos</div>
+          <div class="page-subtitle">Visualize grupos, resultados e classificação interna</div>
+        </div>
+        <div class="page-header-right">
+          <select class="form-control" id="groups-stage-select" onchange="Views.Groups.onStageChange()" style="width:220px;">
+            <option value="">Selecione a etapa...</option>
+          </select>
+        </div>
+      </div>
+      <div class="tabs" id="groups-gender-tabs" style="max-width:300px;">
+        <div class="tab active" onclick="Views.Groups.setGender('M')">👨 Masculino</div>
+        <div class="tab" onclick="Views.Groups.setGender('F')">👩 Feminino</div>
+      </div>
+      <div id="groups-content"></div>
+    </div>
+
+    <!-- ======================== SCHEDULE ======================== -->
+    <div id="view-schedule" class="view">
+      <div class="page-header">
+        <div class="page-header-left">
+          <div class="page-title">📋 Programação de Jogos</div>
+          <div class="page-subtitle">Grade de jogos por quadra e horário</div>
+        </div>
+        <div class="page-header-right">
+          <select class="form-control" id="sched-stage-select" onchange="Views.Schedule.onStageChange()" style="width:220px;">
+            <option value="">Selecione a etapa...</option>
+          </select>
+          <button class="btn btn-secondary btn-print" onclick="window.print()">🖨️ Imprimir</button>
+          <button class="btn btn-primary" onclick="Views.Schedule.autoGenerate()">⚡ Gerar Automático</button>
+        </div>
+      </div>
+      <div id="schedule-content"></div>
+    </div>
+
+    <!-- ======================== SCOREBOARD / TELÃO ======================== -->
+    <div id="view-scoreboard" class="view">
+      <div class="scoreboard-header">
+        <div>
+          <div class="scoreboard-title">📺 Modo Telão</div>
+          <div id="sb-stage-label" style="font-size:14px;color:var(--text-secondary);"></div>
+        </div>
+        <div class="flex items-center gap-12">
+          <select class="form-control" id="sb-stage-select" onchange="Views.Scoreboard.onStageChange()" style="width:200px;">
+            <option value="">Selecione a etapa...</option>
+          </select>
+          <div class="scoreboard-clock" id="sb-clock">00:00:00</div>
+        </div>
+      </div>
+      <div class="grid-2" id="sb-layout" style="align-items:start;">
+        <div id="sb-courts-container"></div>
+        <div>
+          <div class="card mb-16">
+            <div class="card-title mb-12">🏆 Ranking ao Vivo</div>
+            <div class="tabs" style="margin-bottom:12px;">
+              <div class="tab active" id="sb-rank-m" onclick="Views.Scoreboard.setRankTab('M')">Masculino</div>
+              <div class="tab" id="sb-rank-f" onclick="Views.Scoreboard.setRankTab('F')">Feminino</div>
+            </div>
+            <div id="sb-ranking-list"></div>
+          </div>
+          <div class="card">
+            <div class="card-title mb-12">📋 Agenda de Jogos</div>
+            <div id="sb-upcoming"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================== RANKING ======================== -->
+    <div id="view-ranking" class="view">
+      <div class="page-header">
+        <div class="page-header-left">
+          <div class="page-title">🏆 Classificação Geral</div>
+          <div class="page-subtitle">Ranking acumulado da temporada — atualizado automaticamente</div>
+        </div>
+        <div class="page-header-right">
+          <button class="btn btn-secondary btn-print" onclick="window.print()">🖨️ Imprimir</button>
+        </div>
+      </div>
+      <div class="tabs" id="ranking-tabs">
+        <div class="tab active" onclick="Views.Ranking.setGender('M')">👨 Masculino</div>
+        <div class="tab" onclick="Views.Ranking.setGender('F')">👩 Feminino</div>
+      </div>
+      <div class="table-wrapper">
+        <table class="table">
+          <thead id="ranking-thead">
+            <tr>
+              <th>Pos</th><th>Atleta</th><th>E1</th><th>E2</th><th>E3</th><th>E4</th><th>E5</th><th>E6</th><th>E7</th><th>E8</th><th>E9</th><th>E10</th><th>Total</th>
+            </tr>
+          </thead>
+          <tbody id="ranking-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ======================== COURTS ======================== -->
+    <div id="view-courts" class="view">
+      <div class="page-header">
+        <div class="page-header-left">
+          <div class="page-title">🏖️ Quadras</div>
+          <div class="page-subtitle">Gerencie as quadras e configurações de tempo</div>
+        </div>
+        <div class="page-header-right">
+          <button class="btn btn-primary" onclick="Views.Courts.openModal()">+ Nova Quadra</button>
+        </div>
+      </div>
+      <div class="card mb-24">
+        <div class="card-title mb-12">⏱️ Configurações de Tempo</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Duração padrão por jogo (minutos)</label>
+            <input type="number" class="form-control" id="time-match-duration" value="30" min="10" max="120">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Intervalo entre jogos (minutos)</label>
+            <input type="number" class="form-control" id="time-match-interval" value="5" min="0" max="30">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Horário de início padrão</label>
+            <input type="time" class="form-control" id="time-start" value="08:00">
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="Views.Courts.saveTimeConfig()">💾 Salvar Configurações</button>
+      </div>
+      <div class="grid-3" id="courts-grid"></div>
+    </div>
+
+    <!-- ======================== PODIUM ======================== -->
+    <div id="view-podium" class="view">
+      <div id="confetti" class="confetti hidden"></div>
+      <div class="podium-section">
+        <div class="podium-title">🏆 Campeões da Temporada</div>
+        <div class="podium-subtitle">Ranking final após as 10 etapas</div>
+        <div class="tabs" id="podium-tabs" style="max-width:300px;margin:0 auto 32px;">
+          <div class="tab active" onclick="Views.Podium.setGender('M')">👨 Masculino</div>
+          <div class="tab" onclick="Views.Podium.setGender('F')">👩 Feminino</div>
+        </div>
+        <div id="podium-stand"></div>
+        <div class="card" style="max-width:600px;margin:0 auto;">
+          <div class="card-title mb-12">📊 Classificação Completa</div>
+          <div class="table-wrapper">
+            <table class="table">
+              <thead><tr><th>Pos</th><th>Atleta</th><th>Total</th><th>Etapas</th></tr></thead>
+              <tbody id="podium-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main><!-- /main-content -->
+</div><!-- /app -->
+
+<!-- MODALS -->
+<div id="modal-athlete" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-athlete-title">Novo Atleta</div>
+      <button class="modal-close" onclick="Modal.close('modal-athlete')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="ma-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nome completo *</label>
+          <input type="text" class="form-control" id="ma-name" placeholder="Nome do atleta">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Categoria *</label>
+          <select class="form-control" id="ma-gender">
+            <option value="M">Masculino</option>
+            <option value="F">Feminino</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Contato (WhatsApp)</label>
+          <input type="text" class="form-control" id="ma-contact" placeholder="(XX) XXXXX-XXXX">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Data de nascimento</label>
+          <input type="date" class="form-control" id="ma-birthdate">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="Modal.close('modal-athlete')">Cancelar</button>
+      <button class="btn btn-primary" onclick="Views.Athletes.save()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-court" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-court-title">Nova Quadra</div>
+      <button class="modal-close" onclick="Modal.close('modal-court')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="mc-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nome / Identificação *</label>
+          <input type="text" class="form-control" id="mc-name" placeholder="Ex: Quadra 1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tipo de piso</label>
+          <select class="form-control" id="mc-surface">
+            <option value="Areia">Areia</option>
+            <option value="Saibro">Saibro</option>
+            <option value="Grama sintética">Grama sintética</option>
+            <option value="Emborrachado">Emborrachado</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Cobertura</label>
+          <select class="form-control" id="mc-covered">
+            <option value="false">Descoberta</option>
+            <option value="true">Coberta</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Capacidade (espectadores)</label>
+          <input type="number" class="form-control" id="mc-capacity" placeholder="100" min="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status inicial</label>
+        <select class="form-control" id="mc-status">
+          <option value="free">Livre</option>
+          <option value="reserved">Reservada</option>
+          <option value="maint">Manutenção</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="Modal.close('modal-court')">Cancelar</button>
+      <button class="btn btn-primary" onclick="Views.Courts.save()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-stage" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-stage-title">Editar Etapa</div>
+      <button class="modal-close" onclick="Modal.close('modal-stage')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="ms-id">
+      <div class="form-group">
+        <label class="form-label">Nome do Patrocinador</label>
+        <input type="text" class="form-control" id="ms-sponsor" placeholder="Ex: Patrocinador X">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Data de abertura das inscrições</label>
+          <input type="date" class="form-control" id="ms-open-date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Data de encerramento das inscrições</label>
+          <input type="date" class="form-control" id="ms-close-date">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Data da etapa</label>
+          <input type="date" class="form-control" id="ms-event-date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-control" id="ms-status">
+            <option value="upcoming">Aguardando</option>
+            <option value="open">Inscrições Abertas</option>
+            <option value="active">Em Andamento</option>
+            <option value="closed">Encerrada</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Duração do jogo (min)</label>
+          <input type="number" class="form-control" id="ms-duration" value="30" min="10" max="120">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Intervalo (min)</label>
+          <input type="number" class="form-control" id="ms-interval" value="5" min="0" max="30">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="Modal.close('modal-stage')">Cancelar</button>
+      <button class="btn btn-primary" onclick="Views.Stages.saveModal()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-result" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🎾 Registrar Resultado</div>
+      <button class="modal-close" onclick="Modal.close('modal-result')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="mr-stage-id">
+      <input type="hidden" id="mr-group-id">
+      <input type="hidden" id="mr-match-id">
+      <input type="hidden" id="mr-gender">
+      <div id="mr-match-info" class="card mb-16" style="padding:16px;">
+        <div id="mr-team-a" style="font-size:16px;font-weight:700;margin-bottom:4px;"></div>
+        <div style="color:var(--text-muted);font-size:13px;margin-bottom:4px;">vs</div>
+        <div id="mr-team-b" style="font-size:16px;font-weight:700;"></div>
+      </div>
+      <div id="mr-sets-container"></div>
+      <div class="flex justify-center gap-12 mt-16">
+        <button class="btn btn-secondary" onclick="Views.Matches.addSet()">+ Adicionar Set</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="Modal.close('modal-result')">Cancelar</button>
+      <button class="btn btn-success" onclick="Views.Matches.saveResult()">✅ Confirmar Resultado</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-groups-method" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">⚙️ Método de Formação de Grupos</div>
+      <button class="modal-close" onclick="Modal.close('modal-groups-method')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="mgm-stage-id">
+      <input type="hidden" id="mgm-gender">
+      <p style="color:var(--text-secondary);font-size:14px;margin-bottom:20px;">Escolha o método de formação dos grupos para <strong id="mgm-label"></strong>:</p>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <label style="display:flex;gap:14px;cursor:pointer;padding:16px;border:1px solid var(--border);border-radius:var(--radius-sm);transition:var(--transition);" id="method-a-label">
+          <input type="radio" name="groupMethod" value="A" id="method-a" style="margin-top:3px;">
+          <div>
+            <div style="font-weight:700;margin-bottom:4px;">Método A — Classificação Geral</div>
+            <div style="font-size:13px;color:var(--text-secondary);">Atletas ordenados pela classificação acumulada da temporada. Novatos ao final. Grupos de 4 em sequência.</div>
+          </div>
+        </label>
+        <label style="display:flex;gap:14px;cursor:pointer;padding:16px;border:1px solid var(--border);border-radius:var(--radius-sm);transition:var(--transition);" id="method-b-label">
+          <input type="radio" name="groupMethod" value="B" id="method-b" style="margin-top:3px;">
+          <div>
+            <div style="font-weight:700;margin-bottom:4px;">Método B — Classificação da Etapa Anterior</div>
+            <div style="font-size:13px;color:var(--text-secondary);">Agrupa atletas pela colocação obtida na etapa anterior. 1ºs colocados primeiro, depois 2ºs, 3ºs e 4ºs. Ausentes substituídos pela classificação geral.</div>
+          </div>
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="Modal.close('modal-groups-method')">Cancelar</button>
+      <button class="btn btn-primary" onclick="Views.Stages.confirmGroupMethod()">👥 Formar Grupos</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div id="toast-container"></div>
+
+<script>
+// ============================================================
+// DATA STORE
+// ============================================================
+const DB = {
+  get(key, def = null) {
+    try { const v = localStorage.getItem('bt_' + key); return v ? JSON.parse(v) : def; } catch { return def; }
+  },
+  set(key, value) {
+    try { localStorage.setItem('bt_' + key, JSON.stringify(value)); } catch(e) { console.error(e); }
+  },
+  athletes() { return this.get('athletes', []); },
+  saveAthletes(d) { this.set('athletes', d); },
+  stages() { return this.get('stages', []); },
+  saveStages(d) { this.set('stages', d); },
+  courts() { return this.get('courts', []); },
+  saveCourts(d) { this.set('courts', d); },
+  timeConfig() { return this.get('time_config', { duration: 30, interval: 5, startTime: '08:00' }); },
+  saveTimeConfig(d) { this.set('time_config', d); },
+  ptConfig() { return this.get('pt_config', { 1: 100, 2: 80, 3: 60, 4: 40 }); },
+  uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); },
+};
+
+// ============================================================
+// HELPERS
+// ============================================================
+const $ = id => document.getElementById(id);
+const Toast = {
+  show(msg, type = 'info', ms = 3000) {
+    const c = $('toast-container');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    const icons = { info: 'ℹ️', success: '✅', error: '❌', warning: '⚠️' };
+    t.innerHTML = `<span>${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+    c.appendChild(t);
+    setTimeout(() => t.remove(), ms);
+  }
+};
+const Modal = {
+  open(id) { $(id).classList.add('open'); },
+  close(id) { $(id).classList.remove('open'); }
+};
+function fmt(n) { return n >= 10 ? n : '0' + n; }
+function dateFmt(d) {
+  if (!d) return '—';
+  const dt = new Date(d + 'T00:00:00');
+  return `${fmt(dt.getDate())}/${fmt(dt.getMonth()+1)}/${dt.getFullYear()}`;
+}
+function initials(name) {
+  if (!name) return '?';
+  const p = name.trim().split(' ');
+  return (p[0][0] + (p[p.length-1][0] || '')).toUpperCase();
+}
+function avatarEl(name, color = '#00d4ff', size = 36) {
+  return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:rgba(${hexToRgb(color)},0.15);border:2px solid rgba(${hexToRgb(color)},0.4);display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:${size*0.35}px;color:${color};">${initials(name)}</div>`;
+}
+function hexToRgb(hex) {
+  hex = hex.replace('#','');
+  const r=parseInt(hex.substr(0,2),16),g=parseInt(hex.substr(2,2),16),b=parseInt(hex.substr(4,2),16);
+  return `${r},${g},${b}`;
+}
+function stageBadge(status) {
+  const map = {
+    open: '<span class="badge badge-open"><span class="dot dot-green"></span> Inscrições Abertas</span>',
+    active: '<span class="badge badge-active"><span class="dot dot-green"></span> Em Andamento</span>',
+    closed: '<span class="badge badge-closed">Encerrada</span>',
+    upcoming: '<span class="badge badge-closed">Aguardando</span>',
+  };
+  return map[status] || map.upcoming;
+}
+
+// ============================================================
+// SCORING ENGINE
+// ============================================================
+const Scoring = {
+  POINTS: null,
+  pts(pos) { return (this.POINTS || DB.ptConfig())[pos] || 0; },
+
+  // Given array of match objects in a group, compute standings for 4 athletes
+  computeGroupStandings(group, athletes) {
+    const ptCfg = DB.ptConfig();
+    const s = {};
+    group.athleteIds.forEach(id => {
+      s[id] = { id, wins: 0, losses: 0, gamesFor: 0, gamesAgainst: 0, pointsFor: 0, pointsAgainst: 0, directWins: {} };
+    });
+    group.matches.forEach(m => {
+      if (m.status !== 'done' || !m.score) return;
+      const [a, b] = [m.pairA, m.pairB];
+      let winsA = 0, winsB = 0, gfA = 0, gfB = 0;
+      m.score.forEach(set => {
+        const sa = parseInt(set.a || 0), sb = parseInt(set.b || 0);
+        if (sa > sb) winsA++; else if (sb > sa) winsB++;
+        gfA += sa; gfB += sb;
+      });
+      const aWins = winsA > winsB;
+      a.forEach(pid => {
+        if (!s[pid]) return;
+        s[pid].gamesFor += gfA; s[pid].gamesAgainst += gfB;
+        if (aWins) { s[pid].wins++; b.forEach(op => { s[pid].directWins[op] = (s[pid].directWins[op]||0)+1; }); }
+        else s[pid].losses++;
+      });
+      b.forEach(pid => {
+        if (!s[pid]) return;
+        s[pid].gamesFor += gfB; s[pid].gamesAgainst += gfA;
+        if (!aWins) { s[pid].wins++; a.forEach(op => { s[pid].directWins[op] = (s[pid].directWins[op]||0)+1; }); }
+        else s[pid].losses++;
+      });
+    });
+    const arr = Object.values(s);
+    arr.sort((a, b) => {
+      if (b.wins !== a.wins) return b.wins - a.wins;
+      const sb = b.gamesFor - b.gamesAgainst, sa = a.gamesFor - a.gamesAgainst;
+      if (sb !== sa) return sb - sa;
+      return 0;
+    });
+    arr.forEach((item, i) => item.pos = i + 1);
+    return arr;
+  },
+
+  // Update season ranking after all matches in a stage are done
+  updateSeasonRanking(stageId, gender) {
+    const stages = DB.stages();
+    const st = stages.find(s => s.id === stageId);
+    if (!st) return;
+    const groups = (st.groups && st.groups[gender]) || [];
+    const athletes = DB.athletes();
+    groups.forEach(g => {
+      const standings = this.computeGroupStandings(g, athletes);
+      standings.forEach(s => {
+        if (!st.results) st.results = {};
+        if (!st.results[gender]) st.results[gender] = {};
+        st.results[gender][s.id] = { pos: s.pos, pts: this.pts(s.pos) };
+      });
+    });
+    DB.saveStages(stages);
+  },
+
+  // Get season totals
+  getSeasonRanking(gender) {
+    const stages = DB.stages();
+    const athletes = DB.athletes().filter(a => a.gender === gender);
+    const totals = {};
+    athletes.forEach(a => {
+      totals[a.id] = { id: a.id, name: a.name, stagePoints: {}, total: 0 };
+    });
+    stages.forEach(st => {
+      if (!st.results || !st.results[gender]) return;
+      Object.entries(st.results[gender]).forEach(([aid, data]) => {
+        if (!totals[aid]) {
+          const ath = athletes.find(a => a.id === aid);
+          totals[aid] = { id: aid, name: ath ? ath.name : '?', stagePoints: {}, total: 0 };
+        }
+        totals[aid].stagePoints[st.number] = data.pts;
+        totals[aid].total += data.pts;
+      });
+    });
+    const arr = Object.values(totals).filter(a => a.total > 0 || athletes.find(x => x.id === a.id));
+    arr.sort((a, b) => {
+      if (b.total !== a.total) return b.total - a.total;
+      // tiebreak: more 1sts
+      const firstsA = stages.filter(st => st.results && st.results[gender] && st.results[gender][a.id]?.pos === 1).length;
+      const firstsB = stages.filter(st => st.results && st.results[gender] && st.results[gender][b.id]?.pos === 1).length;
+      return firstsB - firstsA;
+    });
+    arr.forEach((item, i) => item.rank = i + 1);
+    return arr;
+  },
+
+  getAthleteSeasonPoints(athleteId, gender, upToStageNumber = 999) {
+    const stages = DB.stages();
+    let total = 0;
+    stages.filter(s => s.number < upToStageNumber).forEach(st => {
+      if (st.results && st.results[gender] && st.results[gender][athleteId]) {
+        total += st.results[gender][athleteId].pts || 0;
+      }
+    });
+    return total;
+  },
+};
+
+// ============================================================
+// GROUP MANAGER
+// ============================================================
+const GroupManager = {
+  form(stageId, gender, method) {
+    const stages = DB.stages();
+    const stage = stages.find(s => s.id === stageId);
+    if (!stage) return;
+    const regs = (stage.registrations && stage.registrations[gender]) || [];
+    if (regs.length < 2) { Toast.show('Mínimo 2 atletas inscritos necessários.', 'error'); return; }
+
+    let orderedIds = [];
+
+    if (method === 'A') {
+      orderedIds = this._methodA(regs, gender, stage.number);
+    } else {
+      orderedIds = this._methodB(regs, gender, stage, stages);
+    }
+
+    // Split into groups of 4
+    const groups = [];
+    for (let i = 0; i < orderedIds.length; i += 4) {
+      const slice = orderedIds.slice(i, i + 4);
+      const gId = DB.uid();
+      groups.push({
+        id: gId,
+        number: Math.floor(i / 4) + 1,
+        athleteIds: slice,
+        matches: this._generateMatches(slice, gId),
+      });
+    }
+
+    if (!stage.groups) stage.groups = {};
+    stage.groups[gender] = groups;
+    if (!stage.groupMethod) stage.groupMethod = {};
+    stage.groupMethod[gender] = method;
+    DB.saveStages(stages);
+    Toast.show(`Grupos formados com sucesso (Método ${method})!`, 'success');
+    return groups;
+  },
+
+  _methodA(regs, gender, stageNumber) {
+    const ranked = Scoring.getSeasonRanking(gender);
+    const rankedIds = ranked.map(r => r.id);
+    const withPts = regs.filter(id => rankedIds.includes(id))
+      .sort((a, b) => rankedIds.indexOf(a) - rankedIds.indexOf(b));
+    const without = regs.filter(id => !rankedIds.includes(id));
+    return [...withPts, ...without];
+  },
+
+  _methodB(regs, gender, stage, stages) {
+    const prev = stages.find(s => s.number === stage.number - 1);
+    if (!prev || !prev.results || !prev.results[gender]) {
+      return this._methodA(regs, gender, stage.number);
+    }
+    const prevResults = prev.results[gender];
+
+    // Group athletes by position in previous stage
+    const byPos = { 1: [], 2: [], 3: [], 4: [] };
+    Object.entries(prevResults).forEach(([id, data]) => {
+      if (regs.includes(id)) {
+        byPos[data.pos] = byPos[data.pos] || [];
+        byPos[data.pos].push(id);
+      }
+    });
+
+    // Fill missing slots with fallback
+    const ranked = Scoring.getSeasonRanking(gender);
+    const used = new Set(Object.values(byPos).flat());
+    const fallback = [...ranked.map(r => r.id), ...regs].filter(id => regs.includes(id) && !used.has(id));
+
+    const ordered = [];
+    [1, 2, 3, 4].forEach(pos => {
+      (byPos[pos] || []).forEach(id => ordered.push(id));
+    });
+    // Add those not in prev stage
+    regs.filter(id => !ordered.includes(id)).forEach(id => ordered.push(id));
+
+    // Now reorder into groups: take one from each position group to build groups of 4
+    // Actually follow spec: all 1sts form first group (up to 4), then 2nds, etc.
+    const finalOrder = [];
+    [1, 2, 3, 4].forEach(pos => {
+      (byPos[pos] || []).forEach(id => finalOrder.push(id));
+    });
+    regs.filter(id => !finalOrder.includes(id)).forEach(id => finalOrder.push(id));
+    return finalOrder;
+  },
+
+  _generateMatches(athleteIds, groupId) {
+    const [A, B, C, D] = athleteIds;
+    const matches = [];
+    const rounds = [
+      { pairA: [A, B], pairB: [C, D] },
+      { pairA: [A, C], pairB: [B, D] },
+      { pairA: [A, D], pairB: [B, C] },
+    ];
+    if (athleteIds.length === 4) {
+      rounds.forEach((r, i) => {
+        matches.push({
+          id: DB.uid(),
+          groupId,
+          round: i + 1,
+          pairA: r.pairA.filter(Boolean),
+          pairB: r.pairB.filter(Boolean),
+          score: null,
+          status: 'waiting',
+          courtId: null,
+          scheduledAt: null,
+        });
+      });
+    } else if (athleteIds.length === 3) {
+      const [X, Y, Z] = athleteIds;
+      [[X, Y, Z], [X, Z, Y], [Y, Z, X]].forEach((trip, i) => {
+        matches.push({
+          id: DB.uid(), groupId, round: i + 1,
+          pairA: [trip[0]], pairB: [trip[1]],
+          score: null, status: 'waiting', courtId: null, scheduledAt: null,
+          byePlayer: trip[2],
+        });
+      });
+    } else if (athleteIds.length === 2) {
+      matches.push({
+        id: DB.uid(), groupId, round: 1,
+        pairA: [A], pairB: [B],
+        score: null, status: 'waiting', courtId: null, scheduledAt: null,
+      });
+    }
+    return matches;
+  }
+};
+
+// ============================================================
+// SCHEDULE ENGINE
+// ============================================================
+const ScheduleEngine = {
+  generate(stageId) {
+    const stages = DB.stages();
+    const stage = stages.find(s => s.id === stageId);
+    if (!stage || !stage.groups) return;
+    const courts = DB.courts().filter(c => c.status !== 'maint');
+    if (!courts.length) { Toast.show('Cadastre pelo menos uma quadra antes de gerar a programação.', 'error'); return; }
+    const cfg = {
+      duration: stage.duration || DB.timeConfig().duration || 30,
+      interval: stage.interval || DB.timeConfig().interval || 5,
+      startTime: DB.timeConfig().startTime || '08:00'
+    };
+
+    // Collect all matches
+    let allMatches = [];
+    ['M', 'F'].forEach(gender => {
+      if (!stage.groups[gender]) return;
+      stage.groups[gender].forEach(g => {
+        g.matches.forEach(m => {
+          allMatches.push({ ...m, gender, groupId: g.id, groupNumber: g.number });
+        });
+      });
+    });
+
+    // Shuffle M and F interleaved
+    const mMatches = allMatches.filter(m => m.gender === 'M');
+    const fMatches = allMatches.filter(m => m.gender === 'F');
+    const interleaved = [];
+    const maxLen = Math.max(mMatches.length, fMatches.length);
+    for (let i = 0; i < maxLen; i++) {
+      if (mMatches[i]) interleaved.push(mMatches[i]);
+      if (fMatches[i]) interleaved.push(fMatches[i]);
+    }
+
+    // Assign time slots
+    const [sh, sm] = cfg.startTime.split(':').map(Number);
+    let slotMin = sh * 60 + sm;
+    const slotDur = cfg.duration + cfg.interval;
+    const courtSlots = {}; // courtId → nextAvailableMin
+    const athleteSlots = {}; // athleteId → nextAvailableMin
+    courts.forEach(c => { courtSlots[c.id] = slotMin; });
+
+    interleaved.forEach(match => {
+      // Find earliest slot where all athletes and a court are free
+      const athletes = [...match.pairA, ...match.pairB];
+
+      let assigned = false;
+      for (let attempt = 0; attempt < 200 && !assigned; attempt++) {
+        const possibleSlot = Math.max(
+          ...athletes.map(id => athleteSlots[id] || slotMin),
+        );
+        // Find a court free at possibleSlot
+        const court = courts.find(c => (courtSlots[c.id] || slotMin) <= possibleSlot);
+        if (court) {
+          const actualSlot = Math.max(courtSlots[court.id] || slotMin, possibleSlot);
+          match.courtId = court.id;
+          match.scheduledAt = actualSlot;
+          courtSlots[court.id] = actualSlot + slotDur;
+          athletes.forEach(id => { athleteSlots[id] = actualSlot + slotDur; });
+          assigned = true;
+        } else {
+          // Push to next available court slot
+          const nextCourtSlot = Math.min(...Object.values(courtSlots));
+          athletes.forEach(id => { if ((athleteSlots[id]||0) < nextCourtSlot) athleteSlots[id] = nextCourtSlot; });
+        }
+      }
+    });
+
+    // Write back
+    ['M', 'F'].forEach(gender => {
+      if (!stage.groups[gender]) return;
+      stage.groups[gender].forEach(g => {
+        g.matches.forEach(m => {
+          const updated = interleaved.find(x => x.id === m.id);
+          if (updated) { m.courtId = updated.courtId; m.scheduledAt = updated.scheduledAt; }
+        });
+      });
+    });
+
+    DB.saveStages(stages);
+    Toast.show('Programação gerada com sucesso!', 'success');
+  },
+
+  minToTime(min) {
+    const h = Math.floor(min / 60), m = min % 60;
+    return `${fmt(h)}:${fmt(m)}`;
+  }
+};
+
+// ============================================================
+// ROUTER
+// ============================================================
+const App = {
+  currentView: 'dashboard',
+  stageDetailId: null,
+
+  navigate(view, stageId = null) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+    this.currentView = view;
+    if (stageId) this.stageDetailId = stageId;
+
+    const viewEl = $(`view-${view}`);
+    if (viewEl) viewEl.classList.add('active');
+
+    const navEl = document.querySelector(`.nav-item[data-view="${view}"]`);
+    if (navEl) navEl.classList.add('active');
+
+    // Init view
+    if (view === 'dashboard') Views.Dashboard.render();
+    else if (view === 'athletes') Views.Athletes.render();
+    else if (view === 'stages') Views.Stages.render();
+    else if (view === 'stage-detail') Views.Stages.renderDetail(stageId);
+    else if (view === 'register') Views.Register.render();
+    else if (view === 'groups') Views.Groups.render();
+    else if (view === 'schedule') Views.Schedule.render();
+    else if (view === 'scoreboard') Views.Scoreboard.render();
+    else if (view === 'ranking') Views.Ranking.render();
+    else if (view === 'courts') Views.Courts.render();
+    else if (view === 'podium') Views.Podium.render();
+  },
+
+  init() {
+    document.querySelectorAll('.nav-item[data-view]').forEach(el => {
+      el.addEventListener('click', () => this.navigate(el.dataset.view));
+    });
+    this.navigate('dashboard');
+  }
+};
+
+// ============================================================
+// VIEWS
+// ============================================================
+const Views = {
+
+  // ---- DASHBOARD ----
+  Dashboard: {
+    render() {
+      const stages = DB.stages();
+      const athletes = DB.athletes();
+      const activeStages = stages.filter(s => s.status === 'active').length;
+      const openStages = stages.filter(s => s.status === 'open').length;
+      const doneStages = stages.filter(s => s.status === 'closed').length;
+
+      $('dashboard-stats').innerHTML = `
+        <div class="stat-card"><div class="stat-value">${athletes.length}</div><div class="stat-label">Atletas Cadastrados</div></div>
+        <div class="stat-card"><div class="stat-value" style="color:var(--green)">${openStages}</div><div class="stat-label">Etapas Abertas</div></div>
+        <div class="stat-card"><div class="stat-value" style="color:var(--cyan)">${activeStages}</div><div class="stat-label">Em Andamento</div></div>
+        <div class="stat-card"><div class="stat-value" style="color:var(--orange)">${doneStages}</div><div class="stat-label">Encerradas</div></div>
+      `;
+
+      const upcomingStages = stages.filter(s => s.status !== 'closed').slice(0, 3);
+      $('dashboard-stages').innerHTML = upcomingStages.length ? upcomingStages.map(s => `
+        <div class="stage-card ${s.status === 'open' ? 'status-open' : s.status === 'active' ? 'status-active' : ''} mb-8" onclick="App.navigate('stage-detail','${s.id}')">
+          <div class="stage-num">${s.number}</div>
+          <div class="stage-title">Etapa ${s.number}</div>
+          <div class="stage-sponsor">${s.sponsor || 'Sem patrocinador'}</div>
+          <div class="stage-meta">${stageBadge(s.status)}${s.eventDate ? `<span style="font-size:12px;color:var(--text-muted);">📅 ${dateFmt(s.eventDate)}</span>` : ''}</div>
+        </div>
+      `).join('') : '<div class="empty-state"><div class="icon">📅</div><h3>Sem etapas</h3><p>Inicialize as etapas na seção Etapas.</p></div>';
+
+      const topM = Scoring.getSeasonRanking('M').slice(0, 5);
+      const topF = Scoring.getSeasonRanking('F').slice(0, 5);
+
+      const renderTop = (arr) => arr.length ? `
+        <div class="table-wrapper"><table class="table">
+          <thead><tr><th>Pos</th><th>Atleta</th><th>Pts</th></tr></thead>
+          <tbody>${arr.map((r, i) => `
+            <tr class="${i<3?`ranking-row-${i+1}`:''}">
+              <td><span class="rank-num rank-${i+1<=3?i+1:'n'}">${i+1<=3?['🥇','🥈','🥉'][i]:i+1}</span></td>
+              <td style="font-weight:600;">${r.name}</td>
+              <td class="pts-cell">${r.total}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table></div>` : '<div class="empty-state" style="padding:20px;"><div class="icon" style="font-size:30px;">🏆</div><p>Sem dados de ranking.</p></div>';
+
+      $('dashboard-ranking-m').innerHTML = renderTop(topM);
+      $('dashboard-ranking-f').innerHTML = renderTop(topF);
+    }
+  },
+
+  // ---- ATHLETES ----
+  Athletes: {
+    _all: [],
+    render() {
+      this._all = DB.athletes();
+      this.filter();
+    },
+    filter() {
+      const q = ($('athlete-search')?.value || '').toLowerCase();
+      const g = $('athlete-gender-filter')?.value || '';
+      const stages = DB.stages();
+      let list = this._all.filter(a => {
+        const matchQ = !q || a.name.toLowerCase().includes(q) || (a.contact || '').includes(q);
+        const matchG = !g || a.gender === g;
+        return matchQ && matchG;
+      });
+      $('athletes-count').textContent = `${list.length} atleta(s) encontrado(s)`;
+      $('athletes-tbody').innerHTML = list.length ? list.map((a, i) => {
+        const stagesPlayed = stages.filter(st => st.registrations && (st.registrations[a.gender] || []).includes(a.id)).length;
+        const pts = Scoring.getSeasonRanking(a.gender).find(r => r.id === a.id)?.total || 0;
+        return `<tr>
+          <td>${i+1}</td>
+          <td><div style="display:flex;align-items:center;gap:10px;">${avatarEl(a.name, a.gender==='M'?'#00d4ff':'#a855f7')}<span style="font-weight:600;">${a.name}</span></div></td>
+          <td><span class="badge badge-${a.gender.toLowerCase()}">${a.gender === 'M' ? '👨 Masculino' : '👩 Feminino'}</span></td>
+          <td style="color:var(--text-secondary);">${a.contact || '—'}</td>
+          <td style="color:var(--text-secondary);">${dateFmt(a.birthdate)}</td>
+          <td style="color:var(--cyan);">${stagesPlayed}</td>
+          <td class="pts-cell">${pts}</td>
+          <td>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-secondary btn-sm" onclick="Views.Athletes.openModal('${a.id}')">✏️</button>
+              <button class="btn btn-danger btn-sm" onclick="Views.Athletes.delete('${a.id}')">🗑️</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('') : `<tr><td colspan="8"><div class="empty-state"><div class="icon">👤</div><h3>Nenhum atleta encontrado</h3></div></td></tr>`;
+    },
+    openModal(id = null) {
+      $('modal-athlete-title').textContent = id ? 'Editar Atleta' : 'Novo Atleta';
+      $('ma-id').value = id || '';
+      if (id) {
+        const a = DB.athletes().find(x => x.id === id);
+        $('ma-name').value = a.name || '';
+        $('ma-gender').value = a.gender || 'M';
+        $('ma-contact').value = a.contact || '';
+        $('ma-birthdate').value = a.birthdate || '';
+      } else {
+        $('ma-name').value = ''; $('ma-gender').value = 'M';
+        $('ma-contact').value = ''; $('ma-birthdate').value = '';
+      }
+      Modal.open('modal-athlete');
+    },
+    save() {
+      const name = $('ma-name').value.trim();
+      const gender = $('ma-gender').value;
+      if (!name || !gender) { Toast.show('Nome e categoria são obrigatórios.', 'error'); return; }
+      const athletes = DB.athletes();
+      const id = $('ma-id').value;
+      if (id) {
+        const a = athletes.find(x => x.id === id);
+        if (a) { a.name = name; a.gender = gender; a.contact = $('ma-contact').value.trim(); a.birthdate = $('ma-birthdate').value; }
+      } else {
+        athletes.push({ id: DB.uid(), name, gender, contact: $('ma-contact').value.trim(), birthdate: $('ma-birthdate').value, createdAt: Date.now() });
+      }
+      DB.saveAthletes(athletes);
+      Modal.close('modal-athlete');
+      Toast.show(`Atleta ${id ? 'atualizado' : 'cadastrado'} com sucesso!`, 'success');
+      this.render();
+    },
+    delete(id) {
+      if (!confirm('Remover atleta? Suas inscrições e resultados serão mantidos.')) return;
+      const athletes = DB.athletes().filter(a => a.id !== id);
+      DB.saveAthletes(athletes);
+      Toast.show('Atleta removido.', 'info');
+      this.render();
+    }
+  },
+
+  // ---- STAGES ----
+  Stages: {
+    render() {
+      const stages = DB.stages();
+      if (!stages.length) {
+        $('stages-grid').innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div class="icon">📅</div><h3>Nenhuma etapa cadastrada</h3><p>Clique em "Inicializar Etapas" para criar as 10 etapas da temporada.</p></div>`;
+        return;
+      }
+      $('stages-grid').innerHTML = stages.map(s => {
+        const regM = (s.registrations?.M || []).length;
+        const regF = (s.registrations?.F || []).length;
+        return `<div class="stage-card ${s.status === 'open' ? 'status-open' : s.status === 'active' ? 'status-active' : ''}" onclick="App.navigate('stage-detail','${s.id}')">
+          <div class="stage-num">${s.number}</div>
+          <div class="stage-title">Etapa ${s.number}</div>
+          <div class="stage-sponsor" style="margin-bottom:10px;">${s.sponsor || '<span style="color:var(--text-muted);">Sem patrocinador</span>'}</div>
+          <div class="stage-meta">
+            ${stageBadge(s.status)}
+          </div>
+          <div style="margin-top:10px;font-size:12px;color:var(--text-muted);">
+            👨 ${regM} inscritos &nbsp;&nbsp; 👩 ${regF} inscritas
+          </div>
+          ${s.eventDate ? `<div style="font-size:11px;color:var(--text-muted);margin-top:4px;">📅 ${dateFmt(s.eventDate)}</div>` : ''}
+        </div>`;
+      }).join('');
+    },
+
+    initStages() {
+      if (DB.stages().length > 0 && !confirm('Reinicializar as etapas? Todos os dados serão perdidos!')) return;
+      const stages = Array.from({length: 10}, (_, i) => ({
+        id: DB.uid(),
+        number: i + 1,
+        sponsor: '',
+        status: i === 0 ? 'open' : 'upcoming',
+        openDate: '', closeDate: '', eventDate: '',
+        duration: 30, interval: 5,
+        registrations: { M: [], F: [] },
+        groups: { M: [], F: [] },
+        results: { M: {}, F: {} },
+        groupMethod: { M: 'A', F: 'A' },
+      }));
+      DB.saveStages(stages);
+      Toast.show('10 etapas inicializadas!', 'success');
+      this.render();
+    },
+
+    renderDetail(stageId) {
+      const stage = DB.stages().find(s => s.id === stageId);
+      if (!stage) { App.navigate('stages'); return; }
+
+      $('sd-title').textContent = `Etapa ${stage.number}${stage.sponsor ? ' — ' + stage.sponsor : ''}`;
+      $('sd-subtitle').innerHTML = stageBadge(stage.status);
+
+      $('sd-actions').innerHTML = `
+        <button class="btn btn-secondary" onclick="Views.Stages.openModal('${stageId}')">✏️ Editar</button>
+        ${stage.status === 'open' ? `<button class="btn btn-warning" onclick="Views.Stages.closeRegistrations('${stageId}')">🔒 Fechar Inscrições</button>` : ''}
+        ${stage.status === 'active' ? `<button class="btn btn-danger" onclick="Views.Stages.closeStage('${stageId}')">🏁 Encerrar Etapa</button>` : ''}
+      `;
+
+      // Tab setup
+      document.querySelectorAll('#sd-tabs .tab').forEach(tab => {
+        tab.onclick = () => {
+          document.querySelectorAll('#sd-tabs .tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          this.renderDetailTab(stageId, tab.dataset.tab);
+        };
+      });
+      this.renderDetailTab(stageId, 'info');
+    },
+
+    renderDetailTab(stageId, tab) {
+      const stage = DB.stages().find(s => s.id === stageId);
+      const container = $('sd-tab-content');
+      const athletes = DB.athletes();
+
+      if (tab === 'info') {
+        container.innerHTML = `
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-title mb-12">📋 Detalhes da Etapa</div>
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <div class="flex justify-between"><span class="text-secondary">Número</span><strong>${stage.number}</strong></div>
+                <div class="flex justify-between"><span class="text-secondary">Patrocinador</span><strong>${stage.sponsor || '—'}</strong></div>
+                <div class="flex justify-between"><span class="text-secondary">Status</span>${stageBadge(stage.status)}</div>
+                <div class="flex justify-between"><span class="text-secondary">Abertura de Inscrições</span><strong>${dateFmt(stage.openDate)}</strong></div>
+                <div class="flex justify-between"><span class="text-secondary">Fechamento de Inscrições</span><strong>${dateFmt(stage.closeDate)}</strong></div>
+                <div class="flex justify-between"><span class="text-secondary">Data da Etapa</span><strong>${dateFmt(stage.eventDate)}</strong></div>
+                <div class="flex justify-between"><span class="text-secondary">Duração por jogo</span><strong>${stage.duration || 30} min</strong></div>
+                <div class="flex justify-between"><span class="text-secondary">Intervalo</span><strong>${stage.interval || 5} min</strong></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title mb-12">📊 Resumo</div>
+              <div class="grid-2" style="gap:12px;">
+                <div class="stat-card"><div class="stat-value" style="font-size:28px;">${(stage.registrations?.M||[]).length}</div><div class="stat-label">Inscritos Masculino</div></div>
+                <div class="stat-card"><div class="stat-value" style="font-size:28px;color:var(--purple);">${(stage.registrations?.F||[]).length}</div><div class="stat-label">Inscritas Feminino</div></div>
+                <div class="stat-card"><div class="stat-value" style="font-size:28px;color:var(--orange);">${(stage.groups?.M||[]).length}</div><div class="stat-label">Grupos Masc.</div></div>
+                <div class="stat-card"><div class="stat-value" style="font-size:28px;color:var(--orange);">${(stage.groups?.F||[]).length}</div><div class="stat-label">Grupos Fem.</div></div>
+              </div>
+            </div>
+          </div>`;
+      }
+
+      else if (tab === 'registrations') {
+        const renderList = (gender) => {
+          const regs = (stage.registrations?.[gender] || []);
+          if (!regs.length) return `<div class="empty-state" style="padding:20px;"><p>Nenhum inscrito.</p></div>`;
+          return `<div style="display:flex;flex-direction:column;gap:8px;">${regs.map((id, i) => {
+            const a = athletes.find(x => x.id === id);
+            return a ? `<div class="flex items-center gap-12" style="padding:10px 12px;background:var(--bg-card);border-radius:8px;border:1px solid var(--border);">
+              <span style="color:var(--text-muted);font-size:13px;">${i+1}.</span>
+              ${avatarEl(a.name, gender==='M'?'#00d4ff':'#a855f7')}
+              <span style="font-weight:600;">${a.name}</span>
+              <span style="margin-left:auto;" class="badge badge-${gender.toLowerCase()}">${gender==='M'?'Masculino':'Feminino'}</span>
+              ${stage.status === 'open' ? `<button class="btn btn-danger btn-sm" onclick="Views.Stages.removeReg('${stageId}','${id}','${gender}')">✕</button>` : ''}
+            </div>` : '';
+          }).join('')}</div>`;
+        };
+        container.innerHTML = `
+          <div class="grid-2">
+            <div><h3 style="font-size:15px;font-weight:700;margin-bottom:12px;">👨 Masculino (${(stage.registrations?.M||[]).length})</h3>${renderList('M')}</div>
+            <div><h3 style="font-size:15px;font-weight:700;margin-bottom:12px;">👩 Feminino (${(stage.registrations?.F||[]).length})</h3>${renderList('F')}</div>
+          </div>
+          ${stage.status === 'open' ? `<div class="mt-16"><button class="btn btn-primary" onclick="App.navigate('register')">+ Inscrever Atleta</button></div>` : ''}
+        `;
+      }
+
+      else if (tab === 'groups') {
+        const renderGroupsGender = (gender) => {
+          const groups = (stage.groups?.[gender] || []);
+          if (!groups.length) {
+            return `<div class="empty-state" style="padding:30px;">
+              <div class="icon">👥</div>
+              <h3>Grupos não formados</h3>
+              <p>Feche as inscrições para formar os grupos.</p>
+              ${stage.status === 'open' ? `<button class="btn btn-warning mt-16" onclick="Views.Stages.closeRegistrations('${stageId}')">🔒 Fechar Inscrições</button>` : ''}
+            </div>`;
+          }
+          return groups.map(g => {
+            const standings = Scoring.computeGroupStandings(g, athletes);
+            const gAthletes = g.athleteIds.map(id => athletes.find(a => a.id === id)?.name || '?');
+            return `<div class="group-card">
+              <div class="group-header">
+                <div class="group-title">Grupo ${g.number}</div>
+                <div class="flex gap-8">
+                  <span class="badge badge-${gender.toLowerCase()}">${gender==='M'?'Masculino':'Feminino'}</span>
+                  <span style="font-size:12px;color:var(--text-muted);">${g.matches.filter(m=>m.status==='done').length}/${g.matches.length} jogos</span>
+                </div>
+              </div>
+              <div class="group-athletes">${gAthletes.map(n=>`<span class="athlete-tag">${n}</span>`).join('')}</div>
+              <div class="group-standings">
+                <div class="standing-row header"><span>Pos</span><span>Atleta</span><span>V</span><span>GF</span><span>GA</span><span>Pts</span></div>
+                ${standings.map((s, i) => {
+                  const a = athletes.find(x => x.id === s.id);
+                  const ptCfg = DB.ptConfig();
+                  return `<div class="standing-row">
+                    <span class="rank-num rank-${i+1<=3?i+1:'n'}" style="width:24px;height:24px;font-size:11px;">${i+1}</span>
+                    <span style="font-weight:600;">${a?.name||'?'}</span>
+                    <span style="color:var(--green);">${s.wins}</span>
+                    <span style="color:var(--cyan);">${s.gamesFor}</span>
+                    <span style="color:var(--red);">${s.gamesAgainst}</span>
+                    <span style="font-weight:700;">${ptCfg[s.pos]||0}</span>
+                  </div>`;
+                }).join('')}
+              </div>
+            </div>`;
+          }).join('');
+        };
+
+        container.innerHTML = `
+          <div class="grid-2">
+            <div>
+              <div class="flex items-center justify-between mb-12">
+                <h3 style="font-size:15px;font-weight:700;">👨 Masculino</h3>
+                ${!((stage.groups?.M||[]).length) && stage.status !== 'open' ? `<button class="btn btn-primary btn-sm" onclick="Views.Stages.openGroupMethod('${stageId}','M')">⚡ Formar Grupos</button>` : ''}
+              </div>
+              ${renderGroupsGender('M')}
+            </div>
+            <div>
+              <div class="flex items-center justify-between mb-12">
+                <h3 style="font-size:15px;font-weight:700;">👩 Feminino</h3>
+                ${!((stage.groups?.F||[]).length) && stage.status !== 'open' ? `<button class="btn btn-primary btn-sm" onclick="Views.Stages.openGroupMethod('${stageId}','F')">⚡ Formar Grupos</button>` : ''}
+              </div>
+              ${renderGroupsGender('F')}
+            </div>
+          </div>
+        `;
+      }
+
+      else if (tab === 'matches') {
+        const renderMatches = (gender) => {
+          const groups = (stage.groups?.[gender] || []);
+          if (!groups.length) return `<div class="empty-state" style="padding:20px;"><p>Grupos não formados ainda.</p></div>`;
+          return groups.map(g => {
+            const gAthletes = g.athleteIds.map(id => athletes.find(a => a.id === id));
+            const getNames = (ids) => ids.map(id => { const a = athletes.find(x => x.id === id); return a?.name || '?'; }).join(' + ');
+            return `<div class="group-card mb-12">
+              <div class="group-header">
+                <div class="group-title">Grupo ${g.number} — ${gender==='M'?'Masculino':'Feminino'}</div>
+              </div>
+              ${g.matches.map(m => {
+                const scoreStr = m.score ? m.score.map(s => `${s.a}-${s.b}`).join(', ') : '';
+                return `<div class="match-card ${m.status==='live'?'live':m.status==='done'?'done':'waiting'} mb-8">
+                  <div class="match-team">
+                    <div class="player">${getNames(m.pairA)}</div>
+                    <div class="match-info">Dupla A — Rodada ${m.round}</div>
+                  </div>
+                  <div class="match-score ${m.status==='done'?'done-score':''}">${scoreStr || 'vs'}</div>
+                  <div class="match-team" style="text-align:right;">
+                    <div class="player">${getNames(m.pairB)}</div>
+                    <div class="match-info" style="text-align:right;">Dupla B</div>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+                    ${m.courtId ? `<span style="font-size:11px;color:var(--text-muted);">📍 ${DB.courts().find(c=>c.id===m.courtId)?.name||'?'} ${m.scheduledAt!=null?'• '+ScheduleEngine.minToTime(m.scheduledAt):''}</span>` : ''}
+                    ${m.status !== 'done' ? `
+                      <button class="btn btn-success btn-sm" onclick="Views.Matches.openResult('${stageId}','${g.id}','${m.id}','${gender}')">Registrar Resultado</button>
+                      ${m.status==='waiting'?`<button class="btn btn-warning btn-sm" onclick="Views.Matches.setLive('${stageId}','${g.id}','${m.id}','${gender}')">▶ Em Andamento</button>`:''}
+                    ` : `<span class="badge badge-done">✅ Encerrado</span>`}
+                  </div>
+                </div>`;
+              }).join('')}
+            </div>`;
+          }).join('');
+        };
+
+        container.innerHTML = `
+          <div class="grid-2">
+            <div><h3 style="font-size:15px;font-weight:700;margin-bottom:12px;">👨 Masculino</h3>${renderMatches('M')}</div>
+            <div><h3 style="font-size:15px;font-weight:700;margin-bottom:12px;">👩 Feminino</h3>${renderMatches('F')}</div>
+          </div>
+        `;
+      }
+    },
+
+    openModal(id) {
+      const stage = DB.stages().find(s => s.id === id);
+      if (!stage) return;
+      $('modal-stage-title').textContent = `Editar Etapa ${stage.number}`;
+      $('ms-id').value = id;
+      $('ms-sponsor').value = stage.sponsor || '';
+      $('ms-open-date').value = stage.openDate || '';
+      $('ms-close-date').value = stage.closeDate || '';
+      $('ms-event-date').value = stage.eventDate || '';
+      $('ms-status').value = stage.status || 'upcoming';
+      $('ms-duration').value = stage.duration || 30;
+      $('ms-interval').value = stage.interval || 5;
+      Modal.open('modal-stage');
+    },
+
+    saveModal() {
+      const id = $('ms-id').value;
+      const stages = DB.stages();
+      const stage = stages.find(s => s.id === id);
+      if (!stage) return;
+      stage.sponsor = $('ms-sponsor').value.trim();
+      stage.openDate = $('ms-open-date').value;
+      stage.closeDate = $('ms-close-date').value;
+      stage.eventDate = $('ms-event-date').value;
+      stage.status = $('ms-status').value;
+      stage.duration = parseInt($('ms-duration').value);
+      stage.interval = parseInt($('ms-interval').value);
+      DB.saveStages(stages);
+      Modal.close('modal-stage');
+      Toast.show('Etapa atualizada!', 'success');
+      if (App.currentView === 'stage-detail') this.renderDetail(id);
+      else this.render();
+    },
+
+    removeReg(stageId, athleteId, gender) {
+      if (!confirm('Remover inscrição?')) return;
+      const stages = DB.stages();
+      const stage = stages.find(s => s.id === stageId);
+      if (!stage) return;
+      stage.registrations[gender] = (stage.registrations[gender] || []).filter(id => id !== athleteId);
+      DB.saveStages(stages);
+      Toast.show('Inscrição removida.', 'info');
+      this.renderDetail(stageId);
+    },
+
+    closeRegistrations(stageId) {
+      if (!confirm('Fechar inscrições? Após isso você irá selecionar o método de formação de grupos.')) return;
+      const stages = DB.stages();
+      const stage = stages.find(s => s.id === stageId);
+      stage.status = 'active';
+      DB.saveStages(stages);
+      // Open group method modal for M first
+      this.openGroupMethod(stageId, 'M');
+    },
+
+    openGroupMethod(stageId, gender) {
+      $('mgm-stage-id').value = stageId;
+      $('mgm-gender').value = gender;
+      $('mgm-label').textContent = gender === 'M' ? 'Masculino' : 'Feminino';
+      $('method-a').checked = true;
+      Modal.open('modal-groups-method');
+    },
+
+    confirmGroupMethod() {
+      const stageId = $('mgm-stage-id').value;
+      const gender = $('mgm-gender').value;
+      const method = document.querySelector('input[name="groupMethod"]:checked')?.value || 'A';
+      Modal.close('modal-groups-method');
+      GroupManager.form(stageId, gender, method);
+      // If M done, ask for F
+      if (gender === 'M') {
+        setTimeout(() => this.openGroupMethod(stageId, 'F'), 500);
+      }
+      if (App.currentView === 'stage-detail') this.renderDetail(stageId);
+    },
+
+    closeStage(stageId) {
+      if (!confirm('Encerrar etapa? A classificação geral será atualizada.')) return;
+      const stages = DB.stages();
+      const stage = stages.find(s => s.id === stageId);
+      stage.status = 'closed';
+      // Compute results
+      Scoring.updateSeasonRanking(stageId, 'M');
+      Scoring.updateSeasonRanking(stageId, 'F');
+      DB.saveStages(stages);
+      Toast.show('Etapa encerrada! Ranking geral atualizado.', 'success');
+      this.renderDetail(stageId);
+    },
+  },
+
+  // ---- REGISTER ----
+  Register: {
+    _gender: 'M',
+    _selectedAthlete: null,
+
+    render() {
+      const stages = DB.stages().filter(s => s.status === 'open');
+      const sel = $('reg-stage-select');
+      sel.innerHTML = '<option value="">Selecione a etapa...</option>' +
+        stages.map(s => `<option value="${s.id}">Etapa ${s.number}${s.sponsor?' — '+s.sponsor:''}</option>`).join('');
+      this.renderLists();
+    },
+
+    onStageChange() {
+      const stageId = $('reg-stage-select').value;
+      const stage = DB.stages().find(s => s.id === stageId);
+      if (!stage) { $('reg-stage-info').classList.add('hidden'); return; }
+      $('reg-stage-info').classList.remove('hidden');
+      $('reg-stage-info').innerHTML = `
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;">
+          ${stageBadge(stage.status)}
+          ${stage.closeDate ? `<span style="font-size:12px;color:var(--text-muted);">Inscrições até ${dateFmt(stage.closeDate)}</span>` : ''}
+        </div>`;
+      this.renderLists();
+    },
+
+    searchAthletes() {
+      const q = $('reg-athlete-search').value.trim().toLowerCase();
+      const container = $('reg-search-results');
+      if (!q) { container.innerHTML = ''; return; }
+      const athletes = DB.athletes().filter(a => a.name.toLowerCase().includes(q) || (a.contact||'').includes(q));
+      container.innerHTML = athletes.slice(0, 5).map(a => `
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;cursor:pointer;"
+          onclick="Views.Register.selectExistingAthlete('${a.id}')">
+          ${avatarEl(a.name, a.gender==='M'?'#00d4ff':'#a855f7', 28)}
+          <span style="font-weight:600;">${a.name}</span>
+          <span class="badge badge-${a.gender.toLowerCase()}" style="margin-left:auto;">${a.gender==='M'?'Masc':'Fem'}</span>
+        </div>
+      `).join('') || '<div style="font-size:13px;color:var(--text-muted);padding:8px;">Nenhum atleta encontrado.</div>';
+    },
+
+    selectExistingAthlete(id) {
+      const a = DB.athletes().find(x => x.id === id);
+      if (!a) return;
+      this._selectedAthlete = a;
+      $('reg-name').value = a.name;
+      $('reg-gender').value = a.gender;
+      $('reg-contact').value = a.contact || '';
+      $('reg-birthdate').value = a.birthdate || '';
+      $('reg-athlete-search').value = a.name;
+      $('reg-search-results').innerHTML = `<div class="badge badge-open" style="margin-bottom:8px;">✅ ${a.name} selecionado</div>`;
+      Toast.show(`Atleta ${a.name} selecionado.`, 'info');
+    },
+
+    submit() {
+      const stageId = $('reg-stage-select').value;
+      if (!stageId) { Toast.show('Selecione uma etapa.', 'error'); return; }
+      const stage = DB.stages().find(s => s.id === stageId);
+      if (!stage || stage.status !== 'open') { Toast.show('Etapa não está com inscrições abertas.', 'error'); return; }
+
+      const name = $('reg-name').value.trim();
+      const gender = $('reg-gender').value;
+      if (!name || !gender) { Toast.show('Nome e categoria são obrigatórios.', 'error'); return; }
+
+      let athletes = DB.athletes();
+      let athlete = this._selectedAthlete || athletes.find(a => a.name.toLowerCase() === name.toLowerCase() && a.gender === gender);
+      if (!athlete) {
+        athlete = { id: DB.uid(), name, gender, contact: $('reg-contact').value.trim(), birthdate: $('reg-birthdate').value, createdAt: Date.now() };
+        athletes.push(athlete);
+        DB.saveAthletes(athletes);
+      }
+
+      if (!stage.registrations) stage.registrations = { M: [], F: [] };
+      if ((stage.registrations[gender] || []).includes(athlete.id)) {
+        Toast.show('Atleta já inscrito nesta etapa.', 'warning'); return;
+      }
+      if (!stage.registrations[gender]) stage.registrations[gender] = [];
+      stage.registrations[gender].push(athlete.id);
+
+      const stages = DB.stages().map(s => s.id === stageId ? stage : s);
+      DB.saveStages(stages);
+
+      Toast.show(`✅ ${athlete.name} inscrito(a) com sucesso!`, 'success');
+      this._selectedAthlete = null;
+      $('reg-name').value = ''; $('reg-contact').value = ''; $('reg-birthdate').value = '';
+      $('reg-athlete-search').value = ''; $('reg-search-results').innerHTML = '';
+      this.renderLists();
+    },
+
+    setGenderTab(g) {
+      this._gender = g;
+      ['M','F'].forEach(x => {
+        $(`reg-tab-${x.toLowerCase()}`).classList.toggle('active', x === g);
+        $(`reg-list-${x.toLowerCase()}`).classList.toggle('hidden', x !== g);
+      });
+    },
+
+    renderLists() {
+      const stageId = $('reg-stage-select').value;
+      const stage = DB.stages().find(s => s.id === stageId);
+      const athletes = DB.athletes();
+      ['M','F'].forEach(g => {
+        const cont = $(`reg-list-${g.toLowerCase()}`);
+        if (!stage) { cont.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Selecione uma etapa.</div>'; return; }
+        const regs = (stage.registrations?.[g] || []);
+        cont.innerHTML = regs.length ? `<div style="display:flex;flex-direction:column;gap:6px;">${regs.map((id, i) => {
+          const a = athletes.find(x => x.id === id);
+          return a ? `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;">
+            <span style="color:var(--text-muted);font-size:12px;">${i+1}.</span>
+            <span style="font-weight:600;">${a.name}</span>
+            <span style="margin-left:auto;font-size:12px;color:var(--text-muted);">${a.contact||''}</span>
+          </div>` : '';
+        }).join('')}</div>` : '<div style="color:var(--text-muted);font-size:13px;">Nenhum inscrito ainda.</div>';
+      });
+    },
+  },
+
+  // ---- GROUPS ----
+  Groups: {
+    _stageId: null,
+    _gender: 'M',
+
+    render() {
+      const stages = DB.stages().filter(s => s.groups && ((s.groups.M||[]).length || (s.groups.F||[]).length));
+      const sel = $('groups-stage-select');
+      const prev = sel.value;
+      sel.innerHTML = '<option value="">Selecione a etapa...</option>' +
+        stages.map(s => `<option value="${s.id}">Etapa ${s.number}${s.sponsor?' — '+s.sponsor:''}</option>`).join('');
+      if (prev) sel.value = prev;
+      if (sel.value) this.onStageChange();
+      else $('groups-content').innerHTML = '<div class="empty-state"><div class="icon">👥</div><h3>Selecione uma etapa</h3></div>';
+    },
+
+    onStageChange() {
+      this._stageId = $('groups-stage-select').value;
+      this.renderGroups();
+    },
+
+    setGender(g) {
+      this._gender = g;
+      document.querySelectorAll('#groups-gender-tabs .tab').forEach((t, i) => t.classList.toggle('active', (i===0&&g==='M')||(i===1&&g==='F')));
+      this.renderGroups();
+    },
+
+    renderGroups() {
+      const stageId = this._stageId;
+      const gender = this._gender;
+      if (!stageId) return;
+      const stage = DB.stages().find(s => s.id === stageId);
+      const athletes = DB.athletes();
+      const groups = (stage?.groups?.[gender] || []);
+      const container = $('groups-content');
+      if (!groups.length) {
+        container.innerHTML = '<div class="empty-state"><div class="icon">👥</div><h3>Grupos não formados</h3><p>Feche as inscrições e selecione o método de formação.</p></div>';
+        return;
+      }
+      const ptCfg = DB.ptConfig();
+      container.innerHTML = groups.map(g => {
+        const standings = Scoring.computeGroupStandings(g, athletes);
+        const getNames = (ids) => ids.map(id => athletes.find(a=>a.id===id)?.name||'?').join(' / ');
+        const done = g.matches.filter(m=>m.status==='done').length;
+        return `<div class="group-card">
+          <div class="group-header">
+            <div class="group-title">Grupo ${g.number}</div>
+            <span style="font-size:12px;color:var(--text-muted);">${done}/${g.matches.length} jogos concluídos</span>
+          </div>
+          <div class="group-athletes">${g.athleteIds.map(id=>`<span class="athlete-tag">${athletes.find(a=>a.id===id)?.name||'?'}</span>`).join('')}</div>
+          <div class="group-standings mb-12">
+            <div class="standing-row header"><span>Pos</span><span>Atleta</span><span>V</span><span>GF</span><span>GA</span><span>Saldo</span><span>Pts Etapa</span></div>
+            ${standings.map((s, i) => {
+              const a = athletes.find(x=>x.id===s.id);
+              return `<div class="standing-row">
+                <span class="rank-num rank-${i+1<=3?i+1:'n'}" style="width:22px;height:22px;font-size:10px;">${i+1}</span>
+                <span style="font-weight:600;">${a?.name||'?'}</span>
+                <span style="color:var(--green);">${s.wins}</span>
+                <span style="color:var(--cyan);">${s.gamesFor}</span>
+                <span style="color:var(--red);">${s.gamesAgainst}</span>
+                <span style="color:${s.gamesFor-s.gamesAgainst>=0?'var(--green)':'var(--red)'};">${s.gamesFor-s.gamesAgainst>=0?'+':''}${s.gamesFor-s.gamesAgainst}</span>
+                <span style="font-weight:700;color:var(--cyan);">${ptCfg[s.pos]||0}</span>
+              </div>`;
+            }).join('')}
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--text-muted);margin-bottom:8px;">JOGOS</div>
+            ${g.matches.map(m => {
+              const sc = m.score ? m.score.map(s=>`${s.a}-${s.b}`).join(', ') : '';
+              const court = m.courtId ? DB.courts().find(c=>c.id===m.courtId) : null;
+              return `<div class="match-card ${m.status==='live'?'live':m.status==='done'?'done':'waiting'} mb-8">
+                <div class="match-team">
+                  <div class="player">${getNames(m.pairA)}</div>
+                  <div class="match-info">Rodada ${m.round}</div>
+                </div>
+                <div class="match-score">${sc||'vs'}</div>
+                <div class="match-team" style="text-align:right;">
+                  <div class="player">${getNames(m.pairB)}</div>
+                  ${court?`<div class="match-info" style="text-align:right;">${court.name} ${m.scheduledAt!=null?'• '+ScheduleEngine.minToTime(m.scheduledAt):''}</div>`:''}
+                </div>
+                ${m.status!=='done'?`<button class="btn btn-success btn-sm" onclick="Views.Matches.openResult('${stageId}','${g.id}','${m.id}','${gender}')">📝 Resultado</button>`:''}
+              </div>`;
+            }).join('')}
+          </div>
+        </div>`;
+      }).join('');
+    },
+  },
+
+  // ---- MATCHES ----
+  Matches: {
+    openResult(stageId, groupId, matchId, gender) {
+      const stage = DB.stages().find(s => s.id === stageId);
+      const group = (stage?.groups?.[gender] || []).find(g => g.id === groupId);
+      const match = group?.matches?.find(m => m.id === matchId);
+      if (!match) return;
+      const athletes = DB.athletes();
+      const getNames = (ids) => ids.map(id => athletes.find(a=>a.id===id)?.name||'?').join(' + ');
+      $('mr-stage-id').value = stageId;
+      $('mr-group-id').value = groupId;
+      $('mr-match-id').value = matchId;
+      $('mr-gender').value = gender;
+      $('mr-team-a').textContent = getNames(match.pairA);
+      $('mr-team-b').textContent = getNames(match.pairB);
+      // Init with existing score or 1 set
+      const sets = (match.score && match.score.length) ? match.score : [{ a: '', b: '' }];
+      this._renderSets(sets);
+      Modal.open('modal-result');
+    },
+
+    _renderSets(sets) {
+      $('mr-sets-container').innerHTML = sets.map((s, i) => `
+        <div class="flex items-center gap-12 mb-12" style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;">
+          <span style="font-size:13px;color:var(--text-muted);min-width:42px;">Set ${i+1}</span>
+          <div style="display:flex;align-items:center;gap:10px;flex:1;">
+            <input type="number" class="form-control set-score-a" data-set="${i}" value="${s.a||''}" placeholder="0" min="0" max="7" style="width:70px;text-align:center;font-size:20px;font-weight:700;">
+            <span style="color:var(--text-muted);font-size:18px;">—</span>
+            <input type="number" class="form-control set-score-b" data-set="${i}" value="${s.b||''}" placeholder="0" min="0" max="7" style="width:70px;text-align:center;font-size:20px;font-weight:700;">
+          </div>
+          ${sets.length > 1 ? `<button class="btn btn-danger btn-sm" onclick="Views.Matches._removeSet(${i})">✕</button>` : ''}
+        </div>
+      `).join('');
+    },
+
+    _removeSet(idx) {
+      const sets = this._getSets();
+      sets.splice(idx, 1);
+      this._renderSets(sets);
+    },
+
+    addSet() {
+      const sets = this._getSets();
+      sets.push({ a: '', b: '' });
+      this._renderSets(sets);
+    },
+
+    _getSets() {
+      const sets = [];
+      const aInputs = document.querySelectorAll('.set-score-a');
+      const bInputs = document.querySelectorAll('.set-score-b');
+      aInputs.forEach((inp, i) => sets.push({ a: parseInt(inp.value)||0, b: parseInt(bInputs[i].value)||0 }));
+      return sets;
+    },
+
+    saveResult() {
+      const stageId = $('mr-stage-id').value;
+      const groupId = $('mr-group-id').value;
+      const matchId = $('mr-match-id').value;
+      const gender = $('mr-gender').value;
+      const sets = this._getSets();
+      if (!sets.length) { Toast.show('Insira pelo menos 1 set.', 'error'); return; }
+
+      const stages = DB.stages();
+      const stage = stages.find(s => s.id === stageId);
+      const group = (stage?.groups?.[gender] || []).find(g => g.id === groupId);
+      const match = group?.matches?.find(m => m.id === matchId);
+      if (!match) return;
+      match.score = sets;
+      match.status = 'done';
+      DB.saveStages(stages);
+      // Auto-update season ranking if stage is active
+      Scoring.updateSeasonRanking(stageId, gender);
+      Modal.close('modal-result');
+      Toast.show('Resultado registrado!', 'success');
+      // Refresh current view
+      if (App.currentView === 'stage-detail') Views.Stages.renderDetail(stageId);
+      else if (App.currentView === 'groups') Views.Groups.renderGroups();
+      else if (App.currentView === 'scoreboard') Views.Scoreboard.renderCourts();
+      Views.Dashboard.render();
+    },
+
+    setLive(stageId, groupId, matchId, gender) {
+      const stages = DB.stages();
+      const stage = stages.find(s => s.id === stageId);
+      const group = (stage?.groups?.[gender] || []).find(g => g.id === groupId);
+      const match = group?.matches?.find(m => m.id === matchId);
+      if (!match) return;
+      match.status = 'live';
+      DB.saveStages(stages);
+      if (App.currentView === 'stage-detail') Views.Stages.renderDetail(stageId);
+      else if (App.currentView === 'groups') Views.Groups.renderGroups();
+      else if (App.currentView === 'scoreboard') Views.Scoreboard.renderCourts();
+      Toast.show('Jogo marcado como Em Andamento.', 'info');
+    },
+  },
+
+  // ---- SCHEDULE ----
+  Schedule: {
+    _stageId: null,
+
+    render() {
+      const stages = DB.stages().filter(s => s.groups && ((s.groups.M||[]).length||(s.groups.F||[]).length));
+      const sel = $('sched-stage-select');
+      const prev = sel.value;
+      sel.innerHTML = '<option value="">Selecione a etapa...</option>' +
+        stages.map(s => `<option value="${s.id}">Etapa ${s.number}${s.sponsor?' — '+s.sponsor:''}</option>`).join('');
+      if (prev) sel.value = prev;
+      if (sel.value) { this._stageId = sel.value; this.renderGrid(); }
+      else $('schedule-content').innerHTML = '<div class="empty-state"><div class="icon">📋</div><h3>Selecione uma etapa</h3></div>';
+    },
+
+    onStageChange() {
+      this._stageId = $('sched-stage-select').value;
+      this.renderGrid();
+    },
+
+    autoGenerate() {
+      if (!this._stageId) { Toast.show('Selecione uma etapa.', 'error'); return; }
+      ScheduleEngine.generate(this._stageId);
+      this.renderGrid();
+    },
+
+    renderGrid() {
+      const stageId = this._stageId;
+      if (!stageId) return;
+      const stage = DB.stages().find(s => s.id === stageId);
+      const courts = DB.courts();
+      const athletes = DB.athletes();
+      const container = $('schedule-content');
+
+      // Collect all matches with schedule info
+      let allMatches = [];
+      ['M','F'].forEach(gender => {
+        (stage?.groups?.[gender]||[]).forEach(g => {
+          g.matches.forEach(m => allMatches.push({...m, gender, groupNumber: g.number}));
+        });
+      });
+
+      const scheduled = allMatches.filter(m => m.scheduledAt != null && m.courtId);
+      if (!scheduled.length) {
+        container.innerHTML = `<div class="empty-state"><div class="icon">📋</div><h3>Sem programação gerada</h3><p>Clique em "Gerar Automático" para distribuir os jogos.</p></div>`;
+        return;
+      }
+
+      // Build time slots
+      const times = [...new Set(scheduled.map(m => m.scheduledAt))].sort((a,b)=>a-b);
+      const usedCourts = [...new Set(scheduled.map(m => m.courtId))].map(id => courts.find(c => c.id === id)).filter(Boolean);
+
+      const colCount = usedCourts.length + 1;
+      container.innerHTML = `
+        <div class="schedule-grid" style="grid-template-columns:90px ${usedCourts.map(()=>'1fr').join(' ')};">
+          <div class="schedule-header">Horário</div>
+          ${usedCourts.map(c => `<div class="schedule-header">🏖️ ${c.name}</div>`).join('')}
+          ${times.map(t => {
+            const timeStr = ScheduleEngine.minToTime(t);
+            return `<div class="time-label">${timeStr}</div>
+            ${usedCourts.map(court => {
+              const matches = scheduled.filter(m => m.scheduledAt === t && m.courtId === court.id);
+              return `<div class="schedule-cell" data-time="${t}" data-court="${court.id}"
+                ondragover="event.preventDefault();this.classList.add('dragover')"
+                ondragleave="this.classList.remove('dragover')"
+                ondrop="Views.Schedule.onDrop(event,'${stageId}','${court.id}',${t})">
+                ${matches.map(m => {
+                  const getNames = (ids) => ids.map(id => athletes.find(a=>a.id===id)?.name||'?').join('/');
+                  const cls = m.status==='live'?'chip-live':m.status==='done'?'chip-done':'chip-wait';
+                  return `<div class="match-chip ${cls}"
+                    draggable="true"
+                    ondragstart="Views.Schedule.onDragStart(event,'${stageId}','${m.id}','${m.gender}')"
+                    title="${getNames(m.pairA)} vs ${getNames(m.pairB)}">
+                    <div style="font-size:10px;color:var(--text-muted);">Gr${m.groupNumber} R${m.round} ${m.gender}</div>
+                    <div>${getNames(m.pairA)}</div>
+                    <div style="font-size:10px;color:var(--text-muted);">vs</div>
+                    <div>${getNames(m.pairB)}</div>
+                  </div>`;
+                }).join('')}
+              </div>`;
+            }).join('')}`;
+          }).join('')}
+        </div>
+        <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;">
+          <span class="badge" style="background:rgba(0,212,255,0.1);">⬜ Aguardando</span>
+          <span class="badge badge-live">🟢 Em Andamento</span>
+          <span class="badge badge-done">⬛ Encerrado</span>
+          <span style="font-size:12px;color:var(--text-muted);">Arraste os jogos para reorganizar</span>
+        </div>
+      `;
+    },
+
+    _dragData: null,
+    onDragStart(e, stageId, matchId, gender) {
+      this._dragData = { stageId, matchId, gender };
+      e.dataTransfer.effectAllowed = 'move';
+    },
+    onDrop(e, stageId, courtId, time) {
+      e.preventDefault();
+      document.querySelectorAll('.schedule-cell').forEach(c => c.classList.remove('dragover'));
+      if (!this._dragData) return;
+      const stages = DB.stages();
+      const stage = stages.find(s => s.id === stageId);
+      if (!stage) return;
+      const { matchId, gender } = this._dragData;
+      let found = false;
+      (stage.groups?.[gender] || []).forEach(g => {
+        g.matches.forEach(m => {
+          if (m.id === matchId) {
+            m.courtId = courtId;
+            m.scheduledAt = time;
+            found = true;
+          }
+        });
+      });
+      if (found) {
+        DB.saveStages(stages);
+        this.renderGrid();
+        Toast.show('Jogo reposicionado!', 'success');
+      }
+      this._dragData = null;
+    },
+  },
+
+  // ---- SCOREBOARD ----
+  Scoreboard: {
+    _stageId: null,
+    _rankGender: 'M',
+    _clockInterval: null,
+
+    render() {
+      const stages = DB.stages().filter(s => s.status === 'active' || s.status === 'closed');
+      const sel = $('sb-stage-select');
+      sel.innerHTML = '<option value="">Selecione a etapa...</option>' +
+        stages.map(s => `<option value="${s.id}">Etapa ${s.number}${s.sponsor?' — '+s.sponsor:''}</option>`).join('');
+      // Auto-select active
+      const active = stages.find(s => s.status === 'active');
+      if (active) { sel.value = active.id; this._stageId = active.id; }
+      this.startClock();
+      this.renderCourts();
+      this.renderRanking();
+      this.renderUpcoming();
+    },
+
+    onStageChange() {
+      this._stageId = $('sb-stage-select').value;
+      const stage = DB.stages().find(s => s.id === this._stageId);
+      $('sb-stage-label').textContent = stage ? `Etapa ${stage.number}${stage.sponsor?' — '+stage.sponsor:''}` : '';
+      this.renderCourts();
+      this.renderRanking();
+      this.renderUpcoming();
+    },
+
+    setRankTab(g) {
+      this._rankGender = g;
+      ['M','F'].forEach(x => $(`sb-rank-${x.toLowerCase()}`).classList.toggle('active', x === g));
+      this.renderRanking();
+    },
+
+    startClock() {
+      if (this._clockInterval) clearInterval(this._clockInterval);
+      const update = () => {
+        const now = new Date();
+        $('sb-clock').textContent = `${fmt(now.getHours())}:${fmt(now.getMinutes())}:${fmt(now.getSeconds())}`;
+      };
+      update();
+      this._clockInterval = setInterval(update, 1000);
+    },
+
+    renderCourts() {
+      const stageId = this._stageId;
+      const container = $('sb-courts-container');
+      if (!stageId) { container.innerHTML = '<div class="empty-state"><div class="icon">📺</div><h3>Selecione uma etapa</h3></div>'; return; }
+      const stage = DB.stages().find(s => s.id === stageId);
+      const courts = DB.courts();
+      const athletes = DB.athletes();
+
+      let allMatches = [];
+      ['M','F'].forEach(gender => {
+        (stage?.groups?.[gender]||[]).forEach(g => {
+          g.matches.forEach(m => allMatches.push({...m, gender, groupNumber: g.number, groupId: g.id}));
+        });
+      });
+
+      const scheduled = allMatches.filter(m => m.courtId);
+      const usedCourts = [...new Set(scheduled.map(m => m.courtId))].map(id => courts.find(c => c.id === id)).filter(Boolean);
+
+      if (!usedCourts.length) {
+        container.innerHTML = '<div class="empty-state"><div class="icon">📋</div><h3>Sem programação</h3><p>Gere a programação na aba Programação.</p></div>';
+        return;
+      }
+
+      container.innerHTML = usedCourts.map(court => {
+        const courtMatches = scheduled.filter(m => m.courtId === court.id).sort((a,b)=>(a.scheduledAt||0)-(b.scheduledAt||0));
+        const isInUse = courtMatches.some(m => m.status === 'live');
+        return `<div class="court-panel mb-16">
+          <div class="court-panel-header">
+            <div class="court-name">🏖️ ${court.name}</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div class="court-status-dot" style="background:${isInUse?'var(--green)':'var(--text-muted)'};${isInUse?'animation:pulse-badge 1.5s infinite;':''}"></div>
+              <span style="font-size:12px;color:var(--text-muted);">${isInUse?'Em uso':'Livre'}</span>
+            </div>
+          </div>
+          <div class="court-panel-body">
+            ${courtMatches.map(m => {
+              const getNames = (ids) => ids.map(id => athletes.find(a=>a.id===id)?.name||'?').join(' + ');
+              const scoreStr = m.score ? m.score.map(s=>`${s.a}-${s.b}`).join(', ') : '';
+              const cls = m.status==='live'?'live':m.status==='done'?'done':'waiting';
+              return `<div class="scoreboard-match ${cls}"
+                draggable="true"
+                ondragstart="Views.Schedule.onDragStart(event,'${stageId}','${m.id}','${m.gender}')">
+                <div class="sm-teams">
+                  <div class="sm-team"><div class="sm-players">${getNames(m.pairA)}</div><div class="sm-score">${m.score?m.score.map(s=>s.a).join('/'):'—'}</div></div>
+                  <div class="sm-team"><div class="sm-players">${getNames(m.pairB)}</div><div class="sm-score">${m.score?m.score.map(s=>s.b).join('/'):'—'}</div></div>
+                </div>
+                <div class="sm-meta">
+                  <div class="sm-info">Gr${m.groupNumber} R${m.round} ${m.gender==='M'?'Masc':'Fem'} ${m.scheduledAt!=null?'• '+ScheduleEngine.minToTime(m.scheduledAt):''}</div>
+                  <div style="display:flex;gap:6px;">
+                    ${m.status==='waiting'?`<button class="btn btn-warning btn-sm" onclick="Views.Matches.setLive('${stageId}','${m.groupId}','${m.id}','${m.gender}');Views.Scoreboard.renderCourts()">▶ Live</button>`:''}
+                    ${m.status!=='done'?`<button class="btn btn-success btn-sm" onclick="Views.Matches.openResult('${stageId}','${m.groupId}','${m.id}','${m.gender}')">📝</button>`:''}
+                    <span class="badge ${m.status==='live'?'badge-live':m.status==='done'?'badge-done':'badge-wait'}">${m.status==='live'?'🟢 Live':m.status==='done'?'✅ Fim':'⏳ Aguard.'}</span>
+                  </div>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>`;
+      }).join('');
+    },
+
+    renderRanking() {
+      const top = Scoring.getSeasonRanking(this._rankGender).slice(0, 8);
+      $('sb-ranking-list').innerHTML = top.length ? `<div style="display:flex;flex-direction:column;gap:4px;">
+        ${top.map((r, i) => `<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;${i<3?'background:rgba(255,255,255,0.04);':''}">
+          <span class="rank-num rank-${i+1<=3?i+1:'n'}" style="width:26px;height:26px;font-size:11px;">${i+1<=3?['🥇','🥈','🥉'][i]:i+1}</span>
+          <span style="flex:1;font-weight:600;font-size:14px;">${r.name}</span>
+          <span style="font-family:var(--font-head);font-weight:800;color:var(--cyan);">${r.total}</span>
+        </div>`).join('')}
+      </div>` : '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px;">Sem dados.</div>';
+    },
+
+    renderUpcoming() {
+      const stageId = this._stageId;
+      if (!stageId) { $('sb-upcoming').innerHTML = ''; return; }
+      const stage = DB.stages().find(s => s.id === stageId);
+      const athletes = DB.athletes();
+      let allMatches = [];
+      ['M','F'].forEach(g => {
+        (stage?.groups?.[g]||[]).forEach(gr => {
+          gr.matches.filter(m=>m.status==='waiting'&&m.scheduledAt!=null).forEach(m => allMatches.push({...m, gender:g, groupNumber:gr.number}));
+        });
+      });
+      allMatches.sort((a,b)=>(a.scheduledAt||0)-(b.scheduledAt||0));
+      $('sb-upcoming').innerHTML = allMatches.slice(0,5).map(m => {
+        const getNames = (ids) => ids.map(id=>athletes.find(a=>a.id===id)?.name||'?').join('/');
+        return `<div style="padding:8px;border-bottom:1px solid var(--border);font-size:13px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:2px;">
+            <span style="color:var(--yellow);font-weight:600;">${ScheduleEngine.minToTime(m.scheduledAt)}</span>
+            <span style="color:var(--text-muted);">Gr${m.groupNumber} R${m.round} ${m.gender}</span>
+          </div>
+          <div style="font-weight:600;">${getNames(m.pairA)} <span style="color:var(--text-muted);">vs</span> ${getNames(m.pairB)}</div>
+        </div>`;
+      }).join('') || '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:16px;">Nenhum jogo agendado.</div>';
+    },
+  },
+
+  // ---- RANKING ----
+  Ranking: {
+    _gender: 'M',
+    render() { this.renderTable(); },
+    setGender(g) {
+      this._gender = g;
+      document.querySelectorAll('#ranking-tabs .tab').forEach((t, i) => t.classList.toggle('active', (i===0&&g==='M')||(i===1&&g==='F')));
+      this.renderTable();
+    },
+    renderTable() {
+      const ranking = Scoring.getSeasonRanking(this._gender);
+      const stages = DB.stages();
+      $('ranking-tbody').innerHTML = ranking.map((r, i) => {
+        const rowClass = i === 0 ? 'ranking-row-1' : i === 1 ? 'ranking-row-2' : i === 2 ? 'ranking-row-3' : '';
+        const stageCells = stages.map(st => {
+          const pts = r.stagePoints[st.number] || '';
+          const best = pts === Math.max(...Object.values(r.stagePoints));
+          return `<td><span class="stage-pts ${pts&&best?'best':''}">${pts||'—'}</span></td>`;
+        }).join('');
+        return `<tr class="${rowClass}">
+          <td><span class="rank-num rank-${i+1<=3?i+1:'n'}">${i+1<=3?['🥇','🥈','🥉'][i]:i+1}</span></td>
+          <td><div style="display:flex;align-items:center;gap:10px;">${avatarEl(r.name,this._gender==='M'?'#00d4ff':'#a855f7')}<span style="font-weight:600;">${r.name}</span></div></td>
+          ${stageCells}
+          <td class="pts-cell">${r.total}</td>
+        </tr>`;
+      }).join('') || `<tr><td colspan="13"><div class="empty-state" style="padding:30px;"><div class="icon">🏆</div><h3>Sem dados de ranking</h3><p>Registre os resultados dos jogos para ver a classificação.</p></div></td></tr>`;
+    },
+  },
+
+  // ---- COURTS ----
+  Courts: {
+    render() {
+      const courts = DB.courts();
+      const tc = DB.timeConfig();
+      $('time-match-duration').value = tc.duration || 30;
+      $('time-match-interval').value = tc.interval || 5;
+      $('time-start').value = tc.startTime || '08:00';
+
+      const statusMap = { free: ['cs-free','Livre'], busy: ['cs-busy','Em Uso'], reserved: ['cs-reserved','Reservada'], maint: ['cs-maint','Manutenção'] };
+      $('courts-grid').innerHTML = courts.length ? courts.map(c => {
+        const [cls, label] = statusMap[c.status] || statusMap.free;
+        return `<div class="court-card">
+          <div class="court-card-name">🏖️ ${c.name}</div>
+          <div class="court-card-meta">
+            <div class="court-meta-item">🏷️ Piso: ${c.surface || '—'}</div>
+            <div class="court-meta-item">${c.covered==='true'||c.covered===true?'🏠 Coberta':'☀️ Descoberta'}</div>
+            ${c.capacity ? `<div class="court-meta-item">👥 Capacidade: ${c.capacity}</div>` : ''}
+          </div>
+          <div class="court-card-status">
+            <span class="court-status-badge ${cls}">${label}</span>
+            <select class="form-control" style="width:auto;padding:4px 8px;font-size:12px;" onchange="Views.Courts.updateStatus('${c.id}',this.value)">
+              <option value="free" ${c.status==='free'?'selected':''}>Livre</option>
+              <option value="busy" ${c.status==='busy'?'selected':''}>Em Uso</option>
+              <option value="reserved" ${c.status==='reserved'?'selected':''}>Reservada</option>
+              <option value="maint" ${c.status==='maint'?'selected':''}>Manutenção</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:4px;">
+            <button class="btn btn-secondary btn-sm" onclick="Views.Courts.openModal('${c.id}')">✏️ Editar</button>
+            <button class="btn btn-danger btn-sm" onclick="Views.Courts.delete('${c.id}')">🗑️</button>
+          </div>
+        </div>`;
+      }).join('') : '<div class="empty-state" style="grid-column:1/-1;"><div class="icon">🏖️</div><h3>Nenhuma quadra cadastrada</h3><p>Clique em "+ Nova Quadra" para adicionar.</p></div>';
+    },
+
+    openModal(id = null) {
+      $('modal-court-title').textContent = id ? 'Editar Quadra' : 'Nova Quadra';
+      $('mc-id').value = id || '';
+      if (id) {
+        const c = DB.courts().find(x => x.id === id);
+        $('mc-name').value = c.name || '';
+        $('mc-surface').value = c.surface || 'Areia';
+        $('mc-covered').value = String(c.covered) || 'false';
+        $('mc-capacity').value = c.capacity || '';
+        $('mc-status').value = c.status || 'free';
+      } else {
+        $('mc-name').value = ''; $('mc-surface').value = 'Areia';
+        $('mc-covered').value = 'false'; $('mc-capacity').value = ''; $('mc-status').value = 'free';
+      }
+      Modal.open('modal-court');
+    },
+
+    save() {
+      const name = $('mc-name').value.trim();
+      if (!name) { Toast.show('Nome é obrigatório.', 'error'); return; }
+      const courts = DB.courts();
+      const id = $('mc-id').value;
+      const data = {
+        name, surface: $('mc-surface').value,
+        covered: $('mc-covered').value === 'true',
+        capacity: parseInt($('mc-capacity').value) || 0,
+        status: $('mc-status').value,
+      };
+      if (id) { const c = courts.find(x => x.id === id); if (c) Object.assign(c, data); }
+      else courts.push({ id: DB.uid(), ...data });
+      DB.saveCourts(courts);
+      Modal.close('modal-court');
+      Toast.show('Quadra salva!', 'success');
+      this.render();
+    },
+
+    delete(id) {
+      if (!confirm('Remover quadra?')) return;
+      DB.saveCourts(DB.courts().filter(c => c.id !== id));
+      Toast.show('Quadra removida.', 'info');
+      this.render();
+    },
+
+    updateStatus(id, status) {
+      const courts = DB.courts();
+      const c = courts.find(x => x.id === id);
+      if (c) { c.status = status; DB.saveCourts(courts); this.render(); }
+    },
+
+    saveTimeConfig() {
+      const cfg = {
+        duration: parseInt($('time-match-duration').value) || 30,
+        interval: parseInt($('time-match-interval').value) || 5,
+        startTime: $('time-start').value || '08:00',
+      };
+      DB.saveTimeConfig(cfg);
+      Toast.show('Configurações de tempo salvas!', 'success');
+    },
+  },
+
+  // ---- PODIUM ----
+  Podium: {
+    _gender: 'M',
+    render() { this.renderPodium(); this.startConfetti(); },
+    setGender(g) {
+      this._gender = g;
+      document.querySelectorAll('#podium-tabs .tab').forEach((t, i) => t.classList.toggle('active', (i===0&&g==='M')||(i===1&&g==='F')));
+      this.renderPodium();
+    },
+    renderPodium() {
+      const ranking = Scoring.getSeasonRanking(this._gender);
+      const [p1, p2, p3] = ranking;
+      const stand = $('podium-stand');
+      if (!p1) {
+        stand.innerHTML = '<div class="empty-state"><p>Sem dados de ranking ainda.</p></div>';
+        $('podium-table').innerHTML = '';
+        return;
+      }
+      const placeCard = (p, cls, medal, rank) => p ? `
+        <div class="podium-place ${cls}">
+          <div class="podium-avatar">${medal}</div>
+          <div class="podium-name">${p.name}</div>
+          <div class="podium-pts">${p.total} pts</div>
+          <div class="podium-block">${rank}</div>
+        </div>` : '';
+      stand.innerHTML = `
+        <div class="podium-stand" style="display:flex;align-items:flex-end;justify-content:center;gap:16px;">
+          ${placeCard(p2, 'podium-p2', '🥈', '2°')}
+          ${placeCard(p1, 'podium-p1', '🥇', '1°')}
+          ${placeCard(p3, 'podium-p3', '🥉', '3°')}
+        </div>`;
+
+      const stages = DB.stages();
+      $('podium-table').innerHTML = ranking.map((r, i) => `
+        <tr>
+          <td><span class="rank-num rank-${i+1<=3?i+1:'n'}">${i+1<=3?['🥇','🥈','🥉'][i]:i+1}</span></td>
+          <td style="font-weight:600;">${r.name}</td>
+          <td class="pts-cell">${r.total}</td>
+          <td style="color:var(--text-muted);">${Object.keys(r.stagePoints).length} etapas</td>
+        </tr>`).join('');
+    },
+    startConfetti() {
+      const el = $('confetti');
+      el.classList.remove('hidden');
+      el.innerHTML = '';
+      const colors = ['#00d4ff','#ff6b35','#00ff88','#ffd600','#a855f7','#ff4757'];
+      for (let i = 0; i < 60; i++) {
+        const p = document.createElement('div');
+        p.className = 'confetti-piece';
+        p.style.left = Math.random() * 100 + 'vw';
+        p.style.background = colors[Math.floor(Math.random() * colors.length)];
+        p.style.animationDuration = (2 + Math.random() * 4) + 's';
+        p.style.animationDelay = Math.random() * 3 + 's';
+        p.style.transform = `rotate(${Math.random()*360}deg)`;
+        el.appendChild(p);
+      }
+    }
+  },
+};
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  // Seed demo data if empty
+  if (!DB.athletes().length) {
+    const demoAthletes = [
+      {id:'a1',name:'Carlos Silva',gender:'M',contact:'11999990001',birthdate:'1990-03-15',createdAt:Date.now()},
+      {id:'a2',name:'Rafael Mendes',gender:'M',contact:'11999990002',birthdate:'1992-07-22',createdAt:Date.now()},
+      {id:'a3',name:'Bruno Costa',gender:'M',contact:'11999990003',birthdate:'1988-11-05',createdAt:Date.now()},
+      {id:'a4',name:'Diego Alves',gender:'M',contact:'11999990004',birthdate:'1995-01-30',createdAt:Date.now()},
+      {id:'a5',name:'Thiago Lima',gender:'M',contact:'11999990005',birthdate:'1993-09-12',createdAt:Date.now()},
+      {id:'a6',name:'Lucas Ferreira',gender:'M',contact:'11999990006',birthdate:'1991-04-18',createdAt:Date.now()},
+      {id:'a7',name:'Marcos Souza',gender:'M',contact:'11999990007',birthdate:'1994-06-25',createdAt:Date.now()},
+      {id:'a8',name:'Pedro Oliveira',gender:'M',contact:'11999990008',birthdate:'1996-12-08',createdAt:Date.now()},
+      {id:'a9',name:'Ana Paula',gender:'F',contact:'11999990009',birthdate:'1993-05-14',createdAt:Date.now()},
+      {id:'a10',name:'Fernanda Lima',gender:'F',contact:'11999990010',birthdate:'1991-08-20',createdAt:Date.now()},
+      {id:'a11',name:'Juliana Costa',gender:'F',contact:'11999990011',birthdate:'1994-02-11',createdAt:Date.now()},
+      {id:'a12',name:'Camila Rocha',gender:'F',contact:'11999990012',birthdate:'1992-10-07',createdAt:Date.now()},
+    ];
+    DB.saveAthletes(demoAthletes);
+  }
+
+  if (!DB.courts().length) {
+    DB.saveCourts([
+      {id:'c1',name:'Quadra 1',surface:'Areia',covered:false,capacity:200,status:'free'},
+      {id:'c2',name:'Quadra 2',surface:'Areia',covered:true,capacity:150,status:'free'},
+      {id:'c3',name:'Quadra 3',surface:'Areia',covered:false,capacity:100,status:'free'},
+    ]);
+  }
+
+  if (!DB.stages().length) {
+    Views.Stages.initStages();
+  }
+
+  App.init();
+});
+</script>
+</body>
+</html>
