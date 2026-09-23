@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Beach Tennis Pro — Gestão de Torneios</title>
+<title>Ranking Beach Tennis</title>
 <meta name="description" content="Sistema completo de gestão de torneios de beach tennis: ranking, etapas, grupos, programação de jogos e modo telão.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -756,8 +756,8 @@ select.form-control option{background:var(--bg-dark);color:var(--text-primary);}
   <aside class="sidebar">
     <div class="sidebar-logo">
       <img src="logo.jpg" alt="DB Beach Tennis" style="width:100%;max-width:180px;border-radius:12px;margin-bottom:10px;box-shadow:0 4px 20px rgba(0,0,0,0.5);display:block;">
-      <h1 style="font-size:15px;">Beach Tennis</h1>
-      <span>Pro Manager</span>
+      <h1 style="font-size:15px;">Ranking</h1>
+      <span>Beach Tennis</span>
     </div>
     <nav class="sidebar-nav">
       <div class="nav-section">
@@ -831,7 +831,7 @@ select.form-control option{background:var(--bg-dark);color:var(--text-primary);}
         <!-- Text -->
         <div style="position:relative;z-index:1;">
           <div style="font-size:11px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;">Sistema Oficial de Ranking</div>
-          <div style="font-family:var(--font-head);font-size:40px;font-weight:900;line-height:1.1;margin-bottom:8px;">Beach Tennis<br><span style="background:linear-gradient(135deg,var(--cyan),var(--orange));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Pro Manager</span></div>
+          <div style="font-family:var(--font-head);font-size:40px;font-weight:900;line-height:1.1;margin-bottom:8px;">Ranking<br><span style="background:linear-gradient(135deg,var(--cyan),var(--orange));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Beach Tennis</span></div>
           <div style="font-size:15px;color:var(--text-secondary);margin-bottom:20px;">Gerencie etapas, grupos, programação e ranking da sua temporada completa.</div>
           <div style="display:flex;gap:12px;flex-wrap:wrap;">
             <button class="btn btn-primary" onclick="App.navigate('register')">✍️ Nova Inscrição</button>
@@ -1792,7 +1792,7 @@ const App = {
     else if (view === 'athletes') Views.Athletes.render();
     else if (view === 'stages') Views.Stages.render();
     else if (view === 'stage-detail') Views.Stages.renderDetail(stageId);
-    else if (view === 'register') Views.Register.render();
+    else if (view === 'register') Views.Register.render(stageId);
     else if (view === 'groups') Views.Groups.render();
     else if (view === 'schedule') Views.Schedule.render();
     else if (view === 'scoreboard') Views.Scoreboard.render();
@@ -2060,7 +2060,7 @@ const Views = {
             <div><h3 style="font-size:15px;font-weight:700;margin-bottom:12px;">👨 Masculino (${(stage.registrations?.M||[]).length})</h3>${renderList('M')}</div>
             <div><h3 style="font-size:15px;font-weight:700;margin-bottom:12px;">👩 Feminino (${(stage.registrations?.F||[]).length})</h3>${renderList('F')}</div>
           </div>
-          ${stage.status === 'open' ? `<div class="mt-16"><button class="btn btn-primary" onclick="App.navigate('register')">+ Inscrever Atleta</button></div>` : ''}
+          ${stage.status === 'open' ? `<div class="mt-16"><button class="btn btn-primary" onclick="App.navigate('register','${stageId}')">+ Inscrever Atleta</button></div>` : ''}
         `;
       }
 
@@ -2266,11 +2266,15 @@ const Views = {
     _gender: 'M',
     _selectedAthlete: null,
 
-    render() {
+    render(preSelectStageId = null) {
       const stages = DB.stages().filter(s => s.status === 'open');
       const sel = $('reg-stage-select');
       sel.innerHTML = '<option value="">Selecione a etapa...</option>' +
         stages.map(s => `<option value="${s.id}">Etapa ${s.number}${s.sponsor?' — '+s.sponsor:''}</option>`).join('');
+      if (preSelectStageId) {
+        sel.value = preSelectStageId;
+        this.onStageChange();
+      }
       this.renderLists();
     },
 
