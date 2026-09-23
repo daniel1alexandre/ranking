@@ -755,8 +755,8 @@ select.form-control option{background:var(--bg-dark);color:var(--text-primary);}
   <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="sidebar-logo">
-      <div class="logo-icon">🎾</div>
-      <h1>Beach Tennis</h1>
+      <img src="logo.jpg" alt="DB Beach Tennis" style="width:100%;max-width:180px;border-radius:12px;margin-bottom:10px;box-shadow:0 4px 20px rgba(0,0,0,0.5);display:block;">
+      <h1 style="font-size:15px;">Beach Tennis</h1>
       <span>Pro Manager</span>
     </div>
     <nav class="sidebar-nav">
@@ -808,15 +808,39 @@ select.form-control option{background:var(--bg-dark);color:var(--text-primary);}
 
     <!-- ======================== DASHBOARD ======================== -->
     <div id="view-dashboard" class="view active">
-      <div class="page-header">
-        <div class="page-header-left">
-          <div class="page-title">🏖️ Dashboard</div>
-          <div class="page-subtitle">Visão geral da temporada</div>
-        </div>
-        <div class="page-header-right">
-          <button class="btn btn-primary" onclick="App.navigate('register')">✍️ Nova Inscrição</button>
+
+      <!-- HERO BANNER -->
+      <div style="
+        position:relative;overflow:hidden;
+        border-radius:20px;margin-bottom:28px;
+        background:linear-gradient(135deg,rgba(0,10,30,0.95) 0%,rgba(6,9,26,0.9) 100%);
+        border:1px solid rgba(255,255,255,0.08);
+        display:flex;align-items:center;gap:32px;
+        padding:28px 36px;
+        box-shadow:0 8px 40px rgba(0,0,0,0.4);
+      ">
+        <!-- Background glow -->
+        <div style="position:absolute;inset:0;background:radial-gradient(ellipse 60% 80% at 80% 50%,rgba(0,212,255,0.08) 0%,transparent 70%);pointer-events:none;"></div>
+        <!-- Logo -->
+        <img src="logo.jpg" alt="DB Beach Tennis"
+          style="width:180px;height:180px;object-fit:cover;border-radius:16px;
+          box-shadow:0 8px 32px rgba(0,0,0,0.6);flex-shrink:0;
+          border:2px solid rgba(255,255,255,0.1);
+          position:relative;z-index:1;"
+        >
+        <!-- Text -->
+        <div style="position:relative;z-index:1;">
+          <div style="font-size:11px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;">Sistema Oficial de Ranking</div>
+          <div style="font-family:var(--font-head);font-size:40px;font-weight:900;line-height:1.1;margin-bottom:8px;">Beach Tennis<br><span style="background:linear-gradient(135deg,var(--cyan),var(--orange));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Pro Manager</span></div>
+          <div style="font-size:15px;color:var(--text-secondary);margin-bottom:20px;">Gerencie etapas, grupos, programação e ranking da sua temporada completa.</div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="App.navigate('register')">✍️ Nova Inscrição</button>
+            <button class="btn btn-secondary" onclick="App.navigate('stages')">📅 Ver Etapas</button>
+            <button class="btn btn-secondary" onclick="App.navigate('ranking')">🏆 Ranking Geral</button>
+          </div>
         </div>
       </div>
+
       <div class="grid-4 mb-24" id="dashboard-stats"></div>
       <div class="grid-2 mb-24">
         <div>
